@@ -79,13 +79,10 @@ public class App {
                     break;
                 case "3":
                     email = preguntaPers("Introduce tu email");
-                    if (gestionaApp.buscaUserBorrados(email) != null) {
-                        clave = preguntaPers("Introduce tu contraseña");
-                        if (clave.equals(gestionaApp.buscaUserBorrados(email).getClave())) {
-                            return gestionaApp.recuperarUser(email);
-                        }
-                    } else System.out.println("No se ha encontrado ningún usuario");
-                    break;
+                    clave = preguntaPers("Introduce tu contraseña");
+                    return gestionaApp.recuperarUser(email,clave);
+                    /*System.out.println("No se ha encontrado ningún usuario");
+                    break;*/
                 case "4":
                     return null;
                 default:

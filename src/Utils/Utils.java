@@ -35,4 +35,7 @@ public class Utils {
         System.out.println("Pulsa para continuar...");
         SCANNER.nextLine();
     }
+    public static String pasaFechaString(LocalDateTime fecha){
+        return fecha.getYear() + "/" + (fecha.getMonthValue() < 10 ? "0" + fecha.getMonthValue(): fecha.getMonthValue()) + "/" + fecha.getDayOfMonth() + "/" + fecha.getHour() +"/"+ fecha.getMinute() + "/" + fecha.getSecond();
+    }
 }

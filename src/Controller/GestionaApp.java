@@ -1,5 +1,6 @@
 package Controller;
 
+import DAO.DAO;
 import Data.Data;
 import Models.Chat;
 import Models.User;
@@ -27,11 +28,11 @@ public class GestionaApp {
     //Otros metodos
     public void mock(){
         for (int i = 0; i < 50000; i++) {
-            usuariosActivos.add(new User("email" + (i + 1) + "@gmail.com","1234",Utils.generaFechaAleatoria(),null));
+            usuariosActivos.add(new User(i,"email" + (i + 1) + "@gmail.com","1234",Utils.generaFechaAleatoria()));
         }
         ordenaUsersActivos();
         for (int i = 0; i < 2385; i++) {
-            usuariosBorrados.add(new User("email" + (i + 50000) + "@gmail.com","1234",Utils.generaFechaAleatoria(),null));
+            usuariosBorrados.add(new User(i + 50000,"email" + (i + 50000) + "@gmail.com","1234",Utils.generaFechaAleatoria()));
         }
         ordenaUsersBorrados();
         for (int i = 0; i < 10; i++) {
@@ -44,12 +45,30 @@ public class GestionaApp {
     public boolean addUser(String email, String clave){
         if (buscaUserActivos(email) != null) return false;
         if (buscaUserBorrados(email) != null) borrarUserBorrados(email);
-        usuariosActivos.addFirst(new User(email,clave));
-        return true;
+        if (DAO.buscaUsuarioEmail(email) == null){
+            DAO.crearUsuario(email,clave);
+            usuariosActivos.addFirst(DAO.buscaUsuarioEmail(email));
+            return true;
+        }
+        return false;
+    }
+    public User recuperarUser(String email,String clave){
+        User user = DAO.buscaUsuarioBorradoEmail(email, clave);
+        if (user != null) {
+            DAO.recuperaUser(user);
+            usuariosActivos.add(user);
+            return user;
+        }
+        return null;
     }
     public User buscaUserActivos(String email){
         for (User user : usuariosActivos){
             if (user.getEmail().equals(email)) return user;
+        }
+        User user = DAO.buscaUsuarioEmail(email);
+        if (user != null){
+            usuariosActivos.add(user);
+            return user;
         }
         return null;
     }
@@ -63,23 +82,8 @@ public class GestionaApp {
         usuariosBorrados.removeIf(user -> user.getEmail().equals(email));
     }
     public User login(String email,String clave){
-        User user = buscaUserActivos(email);
-        if (user == null) return null;
-        if (user.getClave().equals(clave)){
-            usuariosActivos.remove(user);
-            usuariosActivos.addFirst(user);
-            user.setUltimaConexion(LocalDateTime.now());
-            return user;
+        return DAO.iniciarSesion(email,clave);
         }
-        return null;
-    }
-    public User recuperarUser(String email){
-        User user = buscaUserBorrados(email);
-        usuariosBorrados.remove(user);
-        user.setUltimaConexion(LocalDateTime.now());
-        usuariosActivos.add(user);
-        return user;
-    }
     //selection sort es mas rápido
     public  void ordenaUsersActivos(){
         int posMasGrande = 0;
@@ -176,13 +180,15 @@ public class GestionaApp {
             }
         }
     }
+    //todo bug al recuperar cuenta y eliminarla
     public void borrarCuenta(User user){
         for (Chat c: buscaChats(user)){
             borrarChat(c,user);
         }
         usuariosActivos.remove(user);
         user.setUltimaConexion(LocalDateTime.now());
-        usuariosBorrados.addFirst(user);
+        DAO.borraUsuario(user);
+        usuariosBorrados.addFirst(DAO.buscaUsuarioBorradoEmail(user.getEmail(),user.getClave()));
     }
     public void ordenaChats(){
         ArrayList<Chat> chatsOrdenados = new ArrayList<>();

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class User {
+    private int id;
     private String email;
     private LocalDateTime ultimaConexion;
     private String clave;
@@ -15,11 +16,12 @@ public class User {
         ultimaConexion = LocalDateTime.now();
     }
 
-    public User(String email, String clave, LocalDateTime ultimaConexion, LocalDateTime fechaBorrado) {
+    public User(int id,String email, String clave, LocalDateTime ultimaConexion) {
         this.email = email;
         this.clave = clave;
         this.ultimaConexion = ultimaConexion;
         mensajes = new ArrayList<>();
+        this.id = id;
     }
 
     public String getEmail() {
@@ -53,6 +55,14 @@ public class User {
 
     public void setMensajes(ArrayList<ArrayList<Mensaje>> mensajes) {
         this.mensajes = mensajes;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void addMensaje(Mensaje mensaje) {
