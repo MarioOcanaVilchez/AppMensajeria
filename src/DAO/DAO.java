@@ -4,7 +4,6 @@ import Models.Chat;
 import Models.Mensaje;
 import Models.User;
 import Utils.Utils;
-
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -70,7 +69,7 @@ public class DAO {
                 Statement statement = conexionBD.createStatement();
                 ResultSet resultados = statement.executeQuery("select * from usuariosActivos where id = '" + id + "' order by ultimaConexion desc limit 1");
                 while (resultados.next()) {
-                    User user = new User(resultados.getString("email"), resultados.getString("clave"));
+                    User user = new User(id,resultados.getString("email"));
                     actualizaFecha(user);
                     cierraConexion(conexionBD);
                     return user;
@@ -120,7 +119,7 @@ public class DAO {
     public static int generaIdActivos(){
         int id;
         do{
-            id = (int) (Math.random() * 999999);
+            id = (int) (Math.random() * 9999998 + 1);
         }while(buscaUsuarioId(id) != null);
         return id;
     }
@@ -137,12 +136,11 @@ public class DAO {
             if(conexionBD != null) {
                 Statement statement = conexionBD.createStatement();
                 ResultSet resultados = statement.executeQuery("select * from usuariosBorrados where id = '" + id + "' order by ultimaConexion desc limit 1");
-                while (resultados.next()) {
-                    User user = new User(resultados.getString("email"), resultados.getString("clave"));
-                    actualizaFecha(user);
-                    cierraConexion(conexionBD);
-                    return user;
-                }
+                resultados.next();
+                User user = new User(id,resultados.getString("email"));
+                actualizaFecha(user);
+                cierraConexion(conexionBD);
+                return user;
             }
         } catch (SQLException e) {
             return null;
@@ -230,9 +228,6 @@ public class DAO {
     }
     public static ArrayList<Chat> cargaChats(User user){
         ArrayList<Chat> chats = new ArrayList<>();
-        ArrayList<User> usuarios = new ArrayList<>();
-        ArrayList<User> admins = new ArrayList<>();
-        ArrayList<Mensaje> Mensajes = new ArrayList<>();
         ArrayList<Integer> idChats = new ArrayList<>();
         try {
             Connection conexionBD = iniciarConexion();
@@ -244,6 +239,9 @@ public class DAO {
                     idChats.add(resultados.getInt("id"));
                 }
                 for (int id: idChats){
+                    ArrayList<User> usuarios = new ArrayList<>();
+                    ArrayList<User> admins = new ArrayList<>();
+                    ArrayList<Mensaje> mensajes = new ArrayList<>();
                     statement = conexionBD.createStatement();
                     resultados = statement.executeQuery("select * from chatUsuario CU inner join usuariosActivos UA on CU.idUser = UA.id where CU.id = " + id);
                     //Cogemos los usuarios de los chats en los que esta
@@ -256,7 +254,13 @@ public class DAO {
                     while(resultados.next()) {
                         admins.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
                     }
-                    chats.add(new Chat(id,null,usuarios,admins));
+                    statement = conexionBD.createStatement();
+                    resultados = statement.executeQuery("select * from mensajeUsuario where idChat = " + id + " and idUserReceptor = " + user.getId());
+                    //Cogemos los usuarios de los chats en los que esta
+                    while(resultados.next()) {
+                        mensajes.add(new Mensaje(buscaUsuarioId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id));
+                    }
+                    chats.add(new Chat(id,mensajes,usuarios,admins));
                 }
                 cierraConexion(conexionBD);
             }
@@ -265,4 +269,124 @@ public class DAO {
         }
         return chats;
     }
+    public static void addMensaje(Mensaje mensaje,Chat chat) {
+        Connection conexionBD = iniciarConexion();
+        if (conexionBD != null) {
+            try {
+                PreparedStatement ps = conexionBD.prepareStatement("Insert into mensajeChat (idChat,idUserEnvia,texto,fechaEnviado) values (?, ?, ?, ?)");
+                ps.setInt(1, chat.getId());
+                ps.setInt(2, mensaje.getUsuario().getId());
+                ps.setString(3, mensaje.getTexto());
+                ps.setString(4, Utils.pasaFechaString(LocalDateTime.now()));
+                ps.executeUpdate();
+                for (User u : chat.getUsuarios()) {
+                    ps = conexionBD.prepareStatement("Insert into mensajeUsuario (idChat,idUserEnvia,idUserReceptor,texto,fechaEnviado) values (?, ?, ?, ?,?)");
+                    ps.setInt(1, chat.getId());
+                    ps.setInt(2, mensaje.getUsuario().getId());
+                    ps.setInt(3,u.getId());
+                    ps.setString(4, mensaje.getTexto());
+                    ps.setString(5, Utils.pasaFechaString(LocalDateTime.now()));
+                    ps.executeUpdate();
+                }
+                cierraConexion(conexionBD);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    //Mensaje individual
+    public static void addMensaje(Mensaje mensaje,Chat chat,User user) {
+        Connection conexionBD = iniciarConexion();
+        if (conexionBD != null) {
+            try {
+                PreparedStatement ps = conexionBD.prepareStatement("Insert into mensajeChat (idChat,idUserEnvia,texto,fechaEnviado) values (?, ?, ?, ?)");
+                ps.setInt(1, chat.getId());
+                ps.setInt(2, mensaje.getUsuario().getId());
+                ps.setString(3, mensaje.getTexto());
+                ps.setString(4, Utils.pasaFechaString(LocalDateTime.now()));
+                ps.executeUpdate();
+
+                ps = conexionBD.prepareStatement("Insert into mensajeUsuario (idChat,idUserEnvia,idUserReceptor,texto,fechaEnviado) values (?, ?, ?, ?,?)");
+                ps.setInt(1, chat.getId());
+                ps.setInt(2, mensaje.getUsuario().getId());
+                ps.setInt(3,user.getId());
+                ps.setString(4, mensaje.getTexto());
+                ps.setString(5, Utils.pasaFechaString(LocalDateTime.now()));
+                ps.executeUpdate();
+                cierraConexion(conexionBD);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    public static Chat crearChat(ArrayList<User>usuarios,User uTemp){
+        Connection conexionBD = iniciarConexion();
+        if (conexionBD != null) {
+            int id = generaIdChat();
+            try {
+                PreparedStatement ps = conexionBD.prepareStatement("Insert into chats (id,ultimoMensaje) values (?, ?)");
+                ps.setInt(1, id);
+                ps.setString(2, Utils.pasaFechaString(LocalDateTime.now()));
+                ps.executeUpdate();
+                for (User u : usuarios){
+                    ps = conexionBD.prepareStatement("Insert into chatUsuario (id,idUser) values (?, ?)");
+                    ps.setInt(1, id);
+                    ps.setInt(2, u.getId());
+                    ps.executeUpdate();
+                }
+                if (uTemp != null) {
+                    ps = conexionBD.prepareStatement("Insert into userAdmin (id,idUser) values (?, ?)");
+                    ps.setInt(1, id);
+                    ps.setInt(2, uTemp.getId());
+                    ps.executeUpdate();
+                }
+                cierraConexion(conexionBD);
+                return new Chat(id,usuarios,uTemp);
+            }catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+    public static int generaIdChat(){
+        int id;
+        do{
+            id = (int) (Math.random() * 9999999);
+        }while(estaChat(id));
+        return id;
+    }
+    public static boolean estaChat(int id){
+        try {
+            Connection conexionBD = iniciarConexion();
+            if(conexionBD != null) {
+                Statement statement = conexionBD.createStatement();
+                ResultSet resultados = statement.executeQuery("select * from chats where id = '" + id + "' order by ultimoMensaje desc limit 1");
+                if (resultados.next()) {
+                    if (resultados.getInt("id") == id) return true;
+                }
+                cierraConexion(conexionBD);
+                return false;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+        return false;
+    }
+    public static boolean eliminaUserChat(User user,Chat chat){
+        Connection conexionBD = iniciarConexion();
+        if (conexionBD != null) {
+            try {
+                PreparedStatement ps = conexionBD.prepareStatement("delete from userAdmin where idUser = " + user.getId() + " and id = " + chat.getId());
+                ps.executeUpdate();
+                ps = conexionBD.prepareStatement("delete from chatUsuario where idUser = " + user.getId() + " and id = " + chat.getId());
+                ps.executeUpdate();
+                cierraConexion(conexionBD);
+                return true;
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
 }

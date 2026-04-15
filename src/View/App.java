@@ -235,7 +235,7 @@ public class App {
 
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
-        pintaChat(chat,uTemp);
+        pintaChat(chat,uTemp,gestionaApp);
         String mensaje;
         do {
             mensaje = preguntaPers("mensaje o salir o admin");
@@ -244,17 +244,17 @@ public class App {
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
                 Utils.limpiaPantalla();
-                pintaChat(chat,uTemp);
+                pintaChat(chat,uTemp,gestionaApp);
             } else {
                 gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId()));
                 Utils.limpiaPantalla();
-                pintaChat(chat,uTemp);
+                pintaChat(chat,uTemp,gestionaApp);
             }
         } while (!mensaje.equalsIgnoreCase("salir"));
     }
 
     //Pintar un chat
-    public static void pintaChat(Chat chat,User uTemp) {
+    public static void pintaChat(Chat chat,User uTemp,GestionaApp gestionaApp) {
         /*for (int i = 0; i < chat.getMensajes().size(); i++) {
             if (i == 0) {
                 System.out.println(chat.getMensajes().get(i).getUsuario().getEmail());
@@ -269,19 +269,18 @@ public class App {
                 }
             }
         }*/
-        ArrayList<Mensaje> mensajes = uTemp.getChat(chat.getId());
-        if (mensajes != null) {
-            for (int i = 1; i < mensajes.size(); i++) {
-                if (i == 1) {
-                    System.out.println(mensajes.get(i).getUsuario().getEmail());
-                    System.out.println(mensajes.get(i).getTexto());
+        if (chat != null) {
+            for (int i = 0; i < chat.getMensajes().size(); i++) {
+                if (i == 0) {
+                    System.out.println(chat.getMensajes().get(i).getUsuario().getEmail());
+                    System.out.println(chat.getMensajes().get(i).getTexto());
 
                 } else {
-                    if (mensajes.get(i).getUsuario().getEmail().equals(mensajes.get(i - 1).getUsuario().getEmail()))
-                        System.out.println(mensajes.get(i).getTexto());
+                    if (chat.getMensajes().get(i).getUsuario().getEmail().equals(chat.getMensajes().get(i - 1).getUsuario().getEmail()))
+                        System.out.println(chat.getMensajes().get(i).getTexto());
                     else {
-                        System.out.println(mensajes.get(i).getUsuario().getEmail());
-                        System.out.println(mensajes.get(i).getTexto());
+                        System.out.println(chat.getMensajes().get(i).getUsuario().getEmail());
+                        System.out.println(chat.getMensajes().get(i).getTexto());
                     }
                 }
             }
@@ -330,9 +329,12 @@ public class App {
             users.add(uTemp);
             users.add(gestionaApp.buscaUserActivos(email));
             if (gestionaApp.buscaChat(users) == null) {
-                gestionaApp.addChat(users, null);
-                Utils.limpiaPantalla();
-                usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
+                if (gestionaApp.addChat(users, null)) {
+                    Utils.limpiaPantalla();
+                    usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
+                } else {
+                    System.out.println("Error al crear el chat comprueba la conexión");
+                }
             } else usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
         } else {
             System.out.println("Usuario no existente");
@@ -347,7 +349,8 @@ public class App {
         do {
             chat = seleccionaChat(gestionaApp, uTemp);
             if (chat != null) {
-                gestionaApp.borrarChat(chat, uTemp);
+                //gestionaApp.borrarChat(chat, uTemp);
+                gestionaApp.eliminaChat(chat,uTemp);
                 System.out.println("Chat borrado");
             }
         } while (chat != null);
@@ -386,7 +389,7 @@ public class App {
                         quitarAdmin(chat,uTemp);
                         break;
                     case "4":
-                        eliminarUser(chat,uTemp);
+                        eliminarUser(chat,uTemp,gestionaApp);
                         break;
                     case "5":
                         break;
@@ -456,19 +459,18 @@ public class App {
         else if(gestionaApp.buscaUserActivos(user) == null) System.out.println("Ese usuario no existe");
         else{
             chat.addUser(gestionaApp.buscaUserActivos(user));
-            gestionaApp.buscaUserActivos(user).addPrimerMensaje(chat.getId());
             System.out.println("Usuario añadido");
         }
         Utils.pulsaParaContinuar();
     }
-    public static void eliminarUser(Chat chat,User uTemp){
+    public static void eliminarUser(Chat chat,User uTemp,GestionaApp gestionaApp){
         User user;
         do{
            user = seleccionaUser(chat.getUsuarios(uTemp.getEmail()));
            if (user != null){
                if (chat.comprobarUserAdmin(user)) chat.quitarUserAdmin(user);
                chat.borraUser(user.getEmail());
-               user.borraChat(chat.getId());
+               gestionaApp.borraChat(chat.getId());
                System.out.println(user.getEmail() + " ha sido eliminado");
                Utils.pulsaParaContinuar();
                Utils.limpiaPantalla();

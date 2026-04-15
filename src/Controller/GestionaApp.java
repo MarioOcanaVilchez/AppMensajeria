@@ -118,25 +118,32 @@ public class GestionaApp {
     }
     public void addMensaje(Chat chat, Mensaje mensaje){
         chat.addMensaje(mensaje.getTexto(),mensaje.getUsuario(),chat.getId());
+        DAO.addMensaje(mensaje,chat);
         chats.removeIf(c -> c.getId() == chat.getId());
         chats.addFirst(chat);
     }
     public void addMensajeBienvenidaGrupo(String emailCreador,int idChat){
-        chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User("Bienvenido",null),idChat);
+        DAO.addMensaje(new Mensaje(new User(1,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat),buscaChat(idChat));
+        chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(1,"Bienvenido"),idChat);
     }
-    public void addChat(ArrayList<User> users,User uTemp){
-        chats.addFirst(new Chat(generaIdChat(),users, uTemp));
-        //Todo primerMensaje
-        for (int i = 0; i < users.size(); i++) {
-            users.get(i).addPrimerMensaje(chats.getFirst().getId());
+
+    public void borraChat(int id) {
+        chats.remove(getChat(id));
+    }
+
+    public Chat getChat(int id) {
+        for (Chat c : chats){
+            if (c.getId() == id) return c;
         }
+        return null;
     }
-    public int generaIdChat(){
-        int id;
-        do{
-            id = (int) (Math.random() * 100000);
-        }while(buscaChat(id) != null);
-        return id;
+    public boolean addChat(ArrayList<User> users,User uTemp){
+        Chat chat = DAO.crearChat(users,uTemp);
+        if (chat != null){
+            chats.addFirst(chat);
+            return true;
+        }
+        return false;
     }
     public Chat buscaChat(int id){
         for (Chat c: chats){
@@ -144,6 +151,7 @@ public class GestionaApp {
         }
         return null;
     }
+    //Buscar en base de datos
     public Chat buscaChat(ArrayList<User> users){
         for (Chat c: chats){
             if (c.getUsuarios().containsAll(users) && c.getUsuarios().size() == users.size()) return c;
@@ -151,7 +159,7 @@ public class GestionaApp {
         return null;
     }
     public void borrarChat(Chat chat,User uTemp){
-        uTemp.borraChat(chat.getId());
+        borraChat(chat.getId());
         if (chat.comprobarUserAdmin(uTemp)) chat.quitarUserAdmin(uTemp);
         if (chat.getUsuarios().size() == 2) chats.remove(chat);
         else{
@@ -162,6 +170,10 @@ public class GestionaApp {
                 chats.add(chat);
             }
         }
+    }
+    public boolean eliminaChat(Chat chat,User user){
+        chats.remove(chat);
+        return DAO.eliminaUserChat(user,chat);
     }
     public void borrarCuenta(User user){
         for (Chat c: buscaChats(user)){

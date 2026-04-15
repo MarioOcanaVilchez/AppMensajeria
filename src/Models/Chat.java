@@ -11,19 +11,19 @@ public class Chat {
     private ArrayList<User> usersAdmins;
 
     public Chat(int id, ArrayList<User> usuarios, User uTemp) {
-        mensajes = new ArrayList<>();
         this.id = id;
         this.usuarios = usuarios;
         ultimoMensaje = LocalDateTime.now();
         usersAdmins = new ArrayList<>();
         usersAdmins.add(uTemp);
+        mensajes = new ArrayList<>();
     }
 
     public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins) {
         this.id = id;
-        this.mensajes = mensajes;
         this.usuarios = usuarios;
         this.usersAdmins = usersAdmins;
+        this.mensajes = mensajes;
     }
 
     public int getId() {
@@ -32,14 +32,6 @@ public class Chat {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public ArrayList<Mensaje> getMensajes() {
-        return mensajes;
-    }
-
-    public void setMensajes(ArrayList<Mensaje> mensajes) {
-        this.mensajes = mensajes;
     }
 
     public ArrayList<User> getUsuarios() {
@@ -51,6 +43,14 @@ public class Chat {
             if (!u.getEmail().equals(email)) users.add(u);
         }
         return users;
+    }
+
+    public ArrayList<Mensaje> getMensajes() {
+        return mensajes;
+    }
+
+    public void setMensajes(ArrayList<Mensaje> mensajes) {
+        this.mensajes = mensajes;
     }
 
     public void setUsuarios(ArrayList<User> usuarios) {
@@ -90,14 +90,16 @@ public class Chat {
         if (usuario.getEmail().equals("Bienvenido") || buscaUser(usuario.getEmail()) != null){
             ultimoMensaje = LocalDateTime.now();
             mensajes.add(new Mensaje(usuario,mensaje,idChat));
-            addMensajeUsers(mensaje,usuario,idChat);
         }
     }
-    public void addMensajeUsers(String mensaje,User usuario,int idChat){
-        for (User u : usuarios){
-            u.addMensaje(new Mensaje(usuario,mensaje,idChat));
-        }
+
+
+    public void addMensaje(Mensaje mensaje) {
+        mensajes.add(mensaje);
     }
+
+
+
     public void borraUser(String email){
         usuarios.removeIf(user -> user.getEmail().equals(email));
     }
