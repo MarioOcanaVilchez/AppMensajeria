@@ -1,29 +1,21 @@
 package Models;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class User {
     private int id;
     private String email;
-    private LocalDateTime ultimaConexion;
-    private String clave;
+
     private ArrayList<ArrayList<Mensaje>> mensajes;
 
     public User(String email, String clave) {
         this.email = email;
-        this.clave = clave;
-        ultimaConexion = LocalDateTime.now();
     }
 
-    public User(int id,String email, String clave, LocalDateTime ultimaConexion) {
-        this.email = email;
-        this.clave = clave;
-        this.ultimaConexion = ultimaConexion;
-        mensajes = new ArrayList<>();
+    public User(int id, String email) {
         this.id = id;
+        this.email = email;
     }
-
     public String getEmail() {
         return email;
     }
@@ -32,22 +24,6 @@ public class User {
         this.email = email;
     }
 
-
-    public LocalDateTime getUltimaConexion() {
-        return ultimaConexion;
-    }
-
-    public void setUltimaConexion(LocalDateTime ultimaConexion) {
-        this.ultimaConexion = ultimaConexion;
-    }
-
-    public String getClave() {
-        return clave;
-    }
-
-    public void setClave(String clave) {
-        this.clave = clave;
-    }
 
     public ArrayList<ArrayList<Mensaje>> getMensajes() {
         return mensajes;

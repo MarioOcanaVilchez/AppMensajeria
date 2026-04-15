@@ -19,6 +19,13 @@ public class Chat {
         usersAdmins.add(uTemp);
     }
 
+    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins) {
+        this.id = id;
+        this.mensajes = mensajes;
+        this.usuarios = usuarios;
+        this.usersAdmins = usersAdmins;
+    }
+
     public int getId() {
         return id;
     }
@@ -110,7 +117,7 @@ public class Chat {
     }
     public void addUserAdmin(User user){
         if (getUsersNoAdmins().contains(user)){
-           usersAdmins.add(user);
+            usersAdmins.add(user);
         }
     }
     public void quitarUserAdmin(User user){

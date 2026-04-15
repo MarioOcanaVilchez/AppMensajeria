@@ -50,9 +50,6 @@ public class App {
                         default:
                             System.out.println("Opción no existente");
                     }
-                    if (!op.equals("7")) {
-                        Utils.limpiaPantalla();
-                    }
                 } while (!op.equals("7") && !op.equals("6"));
             }
         } while (uTemp != null);
@@ -63,11 +60,12 @@ public class App {
         do {
             String op = pintaMenu();
             String email, clave;
+            User usuario;
             switch (op) {
                 case "1":
                     email = preguntaPers("Introduce tu email");
                     clave = preguntaPers("Introduce tu contraseña");
-                    User usuario = gestionaApp.login(email, clave);
+                    usuario = gestionaApp.login(email, clave);
                     if (usuario != null) return usuario;
                     else System.out.println("Usuario o contraseña incorrectos");
                     break;
@@ -80,9 +78,14 @@ public class App {
                 case "3":
                     email = preguntaPers("Introduce tu email");
                     clave = preguntaPers("Introduce tu contraseña");
-                    return gestionaApp.recuperarUser(email,clave);
-                    /*System.out.println("No se ha encontrado ningún usuario");
-                    break;*/
+                    usuario = gestionaApp.recuperarUser(email,clave);
+                    if (usuario == null) System.out.println("No se ha encontrado ningún usuario");
+                    else{
+                        System.out.println("Usuario recuperado");
+                        Utils.pulsaParaContinuar();
+                        return usuario;
+                    }
+                    break;
                 case "4":
                     return null;
                 default:
@@ -93,7 +96,6 @@ public class App {
             Utils.limpiaPantalla();
         } while (true);
     }
-
     //Pintar el menu de inicio
     public static String pintaMenu() {
         System.out.println("""
@@ -191,35 +193,34 @@ public class App {
 
     //Cambiar la clave
     public static void cambiaClave(User uTemp, GestionaApp gestionaApp) {
-        String claveNueva = preguntaPers("Introduce tu nueva contraseña");
+    /*    String claveNueva = preguntaPers("Introduce tu nueva contraseña");
         if (claveNueva.equals(uTemp.getClave()))
             System.out.println("Tu nueva contraseña no puede ser igual al anterior");
         else {
             uTemp.setClave(claveNueva);
             System.out.println("contraseña actualizado");
-        }
+        }*/
     }
 
     //Menu para seleccionar un chat o grupo
     public static Chat seleccionaChat(GestionaApp gestionaApp, User uTemp) {
         int op;
-        ArrayList<Chat> chats = gestionaApp.buscaChats(uTemp);
         do {
-            pintaChats(chats, uTemp);
+            pintaChats(gestionaApp.getChats(), uTemp);
             try {
                 op = Integer.parseInt(preguntaPers("Introduce una opción"));
             } catch (NumberFormatException e) {
                 System.out.println("Opción no existente");
                 op = Integer.MIN_VALUE;
             }
-            if (op <= chats.size()) {
+            if (op <= gestionaApp.getChats().size()) {
                 if (op <= 0) System.out.println("Opción no existente");
                 else {
                     Utils.limpiaPantalla();
-                    return chats.get(op - 1);
+                    return gestionaApp.getChats().get(op - 1);
                 }
             }
-        } while (op != chats.size() + 1);
+        } while (op != gestionaApp.getChats().size() + 1);
         return null;
     }
 
@@ -425,7 +426,7 @@ public class App {
     //Pintar los usuarios
     public static void pintaUsers(ArrayList<User> users){
         for (int i = 0; i < users.size(); i++) {
-            System.out.println((i + 1) + ". " + users.get(i).getEmail());
+            System.out.println((i + 1) + ". " + users.get(i));
         }
         System.out.println((users.size() + 1) + ". Salir");
     }
