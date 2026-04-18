@@ -12,7 +12,6 @@ public class App {
     static void main() {
         runApp();
     }
-
     public static Scanner scanner = new Scanner(System.in);
 
     public static void runApp() {
@@ -52,7 +51,6 @@ public class App {
                     if (!op.equals("7")){
                         Utils.pulsaParaContinuar();
                         Utils.limpiaPantalla();
-                        gestionaApp.cargaChats();
                     }
                 } while (!op.equals("7") && uTemp.getId() != 0);
             }
@@ -230,6 +228,7 @@ public class App {
     public static void verChats(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
         do {
+            gestionaApp.cargaChats();
             chat = seleccionaChat(gestionaApp);
             if (chat != null) usaChat(chat, gestionaApp, uTemp);
         } while (chat != null);
@@ -237,7 +236,8 @@ public class App {
 
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
-        pintaChat(chat,uTemp,gestionaApp);
+        gestionaApp.cargaChats();
+        pintaChat(chat);
         String mensaje;
         do {
             mensaje = preguntaPers("mensaje o salir o admin");
@@ -246,31 +246,18 @@ public class App {
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
                 Utils.limpiaPantalla();
-                pintaChat(chat,uTemp,gestionaApp);
+                pintaChat(chat);
             } else {
                 gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId()));
                 Utils.limpiaPantalla();
-                pintaChat(chat,uTemp,gestionaApp);
+                gestionaApp.cargaChats();
+                pintaChat(chat);
             }
         } while (!mensaje.equalsIgnoreCase("salir"));
     }
 
     //Pintar un chat
-    public static void pintaChat(Chat chat,User uTemp,GestionaApp gestionaApp) {
-        /*for (int i = 0; i < chat.getMensajes().size(); i++) {
-            if (i == 0) {
-                System.out.println(chat.getMensajes().get(i).getUsuario().getEmail());
-                System.out.println(chat.getMensajes().get(i).getTexto());
-
-            } else {
-                if (chat.getMensajes().get(i).getUsuario().equals(chat.getMensajes().get(i - 1).getUsuario()))
-                    System.out.println(chat.getMensajes().get(i).getTexto());
-                else {
-                    System.out.println(chat.getMensajes().get(i).getUsuario().getEmail());
-                    System.out.println(chat.getMensajes().get(i).getTexto());
-                }
-            }
-        }*/
+    public static void pintaChat(Chat chat) {
         if (chat != null) {
             for (int i = 0; i < chat.getMensajes().size(); i++) {
                 if (i == 0) {

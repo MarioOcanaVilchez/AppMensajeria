@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Sostenibilidad3T:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Sostenibilidad3T_jar</output-path>
+    <root id="archive" name="Sostenibilidad3T.jar">
+      <element id="module-output" name="Sostenibilidad3T" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/mysql-connector-j-9.6.0/mysql-connector-j-9.6.0/mysql-connector-j-9.6.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
