@@ -85,7 +85,7 @@ public class DAO {
             Connection conexionBD = iniciarConexion();
             if(conexionBD != null) {
                 Statement statement = conexionBD.createStatement();
-                ResultSet resultados = statement.executeQuery("select * from usuariosActivos where id = '" + user.getId() + "' order by ultimaConexion desc limit 1");
+                ResultSet resultados = statement.executeQuery("select * from usuariosActivos where id = " + user.getId() + " order by ultimaConexion desc limit 1");
                 resultados.next();
                 String clave = resultados.getString("clave");
                 PreparedStatement ps = conexionBD.prepareStatement("delete from usuariosActivos where id = " + user.getId());
@@ -166,6 +166,7 @@ public class DAO {
         return null;
     }
     public static User buscaUsuarioBorradoEmail(String email){
+        email = email.replace('\'',' ');
         try {
             Connection conexionBD = iniciarConexion();
             if(conexionBD != null) {
@@ -185,7 +186,7 @@ public class DAO {
         Connection conexionBD = iniciarConexion();
         if (conexionBD != null) {
             try {
-                PreparedStatement ps = conexionBD.prepareStatement("delete from usuariosBorrados where id = '" + user.getId() + "'");
+                PreparedStatement ps = conexionBD.prepareStatement("delete from usuariosBorrados where id = " + user.getId());
                 ps.executeUpdate();
                 ps = conexionBD.prepareStatement("Insert into usuariosActivos (id,email,clave,ultimaConexion) values (?, ?, ?, ?)");
                 ps.setInt(1,generaIdActivos());
