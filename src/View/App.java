@@ -17,7 +17,6 @@ public class App {
 
     public static void runApp() {
         GestionaApp gestionaApp = new GestionaApp();
-        gestionaApp.mock();
         String op;
         User uTemp;
         do {
@@ -50,7 +49,12 @@ public class App {
                         default:
                             System.out.println("Opción no existente");
                     }
-                } while (!op.equals("7") && !op.equals("6"));
+                    if (!op.equals("7")){
+                        Utils.pulsaParaContinuar();
+                        Utils.limpiaPantalla();
+                        gestionaApp.cargaChats();
+                    }
+                } while (!op.equals("7") && uTemp.getId() != 0);
             }
         } while (uTemp != null);
     }
@@ -111,6 +115,15 @@ public class App {
         System.out.print(mensaje + ": ");
         return scanner.nextLine();
     }
+    //Pregunta de si o no
+    public static boolean preguntaSON(String mensaje){
+        String op;
+        do{
+            op = preguntaPers(mensaje);
+            if (!op.equalsIgnoreCase("si") && !op.equalsIgnoreCase("no")) System.out.println("Respuesta no válida responde con si o no");
+        }while(!op.equalsIgnoreCase("si") && !op.equalsIgnoreCase("no"));
+        return op.equalsIgnoreCase("si");
+    }
 
     //Pintar el menu principal
     public static String pintaMenuPrincipal(User uTemp) {
@@ -136,23 +149,16 @@ public class App {
     }
 
     //Pintar los chats y grupos de un usuario
-    public static void pintaChats(ArrayList<Chat> chats, User uTemp) {
+    public static void pintaChats(ArrayList<Chat> chats) {
         if (chats.isEmpty()) System.out.println("No hay chats");
         for (int i = 0; i < chats.size(); i++) {
-            System.out.print((i + 1) + ". Chat con ");
-            pintaUsersChat(chats.get(i), uTemp);
+            System.out.println((i + 1) + ". " + chats.get(i).getNombre());
         }
         System.out.println((chats.size() + 1) + ". Salir");
     }
 
     //Pinta los usuarios del chat para identificarlo
-    public static void pintaUsersChat(Chat chat, User uTemp) {
-        ArrayList<User> users = chat.getUsuarios(uTemp.getEmail());
-        for (int i = 0; i < users.size(); i++) {
-            if (i != users.size() - 1) System.out.print(users.get(i).getEmail() + ", ");
-            else System.out.println(users.get(i).getEmail());
-        }
-    }
+
 
     //Gestión de cambiar datos
     public static void cambiarDatos(User uTemp, GestionaApp gestionaApp) {
@@ -186,27 +192,23 @@ public class App {
         else if (gestionaApp.buscaUserActivos(emailNuevo) != null)
             System.out.println("Email ya en uso por otro usuario");
         else {
-            uTemp.setEmail(emailNuevo);
-            System.out.println("Email actualizado");
+            if(gestionaApp.cambiaEmail(emailNuevo,uTemp)) System.out.println("Email actualizado");
+            else System.out.println("Error de conexión intentalo de nuevo");
         }
     }
 
     //Cambiar la clave
     public static void cambiaClave(User uTemp, GestionaApp gestionaApp) {
-    /*    String claveNueva = preguntaPers("Introduce tu nueva contraseña");
-        if (claveNueva.equals(uTemp.getClave()))
-            System.out.println("Tu nueva contraseña no puede ser igual al anterior");
-        else {
-            uTemp.setClave(claveNueva);
-            System.out.println("contraseña actualizado");
-        }*/
+        String claveNueva = preguntaPers("Introduce tu nueva contraseña");
+        if(gestionaApp.cambiaClave(claveNueva,uTemp)) System.out.println("clave actualizado");
+        else System.out.println("Error de conexión intentalo de nuevo");
     }
 
     //Menu para seleccionar un chat o grupo
-    public static Chat seleccionaChat(GestionaApp gestionaApp, User uTemp) {
+    public static Chat seleccionaChat(GestionaApp gestionaApp) {
         int op;
         do {
-            pintaChats(gestionaApp.getChats(), uTemp);
+            pintaChats(gestionaApp.getChats());
             try {
                 op = Integer.parseInt(preguntaPers("Introduce una opción"));
             } catch (NumberFormatException e) {
@@ -228,7 +230,7 @@ public class App {
     public static void verChats(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
         do {
-            chat = seleccionaChat(gestionaApp, uTemp);
+            chat = seleccionaChat(gestionaApp);
             if (chat != null) usaChat(chat, gestionaApp, uTemp);
         } while (chat != null);
     }
@@ -290,7 +292,7 @@ public class App {
     //Crear un grupo
     public static void crearGrupo(GestionaApp gestionaApp, User uTemp) {
         ArrayList<User> users = new ArrayList<>();
-        String email;
+        String email,nombre;
         int cont = 1;
         do {
             email = preguntaPers("Introduce al miembro " + cont + " del chat o crear para terminar");
@@ -308,7 +310,8 @@ public class App {
         else {
             users.add(uTemp);
             if (gestionaApp.buscaChat(users) == null) {
-                gestionaApp.addChat(users, uTemp);
+                nombre = pideNombre();
+                gestionaApp.addChat(users, uTemp,nombre,uTemp);
                 System.out.println("Chat creado");
                 Utils.pulsaParaContinuar();
                 Utils.limpiaPantalla();
@@ -317,8 +320,13 @@ public class App {
 
             } else System.out.println("Chat ya existente");
         }
-
     }
+    public static String pideNombre(){
+        String nombre = null;
+        if (preguntaSON("Desea ponerle un nombre al grupo")) nombre = preguntaPers("Introduce el nombre");
+        return nombre;
+    }
+
 
     //Crea un chat con una unica persona
     public static void crearChat(GestionaApp gestionaApp, User uTemp) {
@@ -329,7 +337,7 @@ public class App {
             users.add(uTemp);
             users.add(gestionaApp.buscaUserActivos(email));
             if (gestionaApp.buscaChat(users) == null) {
-                if (gestionaApp.addChat(users, null)) {
+                if (gestionaApp.addChat(users, null,null,uTemp)) {
                     Utils.limpiaPantalla();
                     usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
                 } else {
@@ -347,28 +355,33 @@ public class App {
     public static void borrarChat(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
         do {
-            chat = seleccionaChat(gestionaApp, uTemp);
+            chat = seleccionaChat(gestionaApp);
             if (chat != null) {
                 //gestionaApp.borrarChat(chat, uTemp);
-                gestionaApp.eliminaChat(chat,uTemp);
-                System.out.println("Chat borrado");
+                if (gestionaApp.borrarChat(chat,uTemp)) System.out.println("Chat eliminado");
+                else System.out.println("Error de conexión intentalo de nuevo");
             }
         } while (chat != null);
     }
 
     //Borrar la cuenta y con ello todos los chats
     public static void borrarCuenta(GestionaApp gestionaApp, User uTemp) {
-        gestionaApp.borrarCuenta(uTemp);
+        if (preguntaSON("Estas seguro perderás los todos tus chats y mensajes")){
+            gestionaApp.borrarCuenta(uTemp);
+            uTemp.setId(0);
+        }
+        else System.out.println("Operación cancelada");
     }
 
     //Menu de admin
     public static String pintaMenuAdmin() {
         System.out.println("""
-                1. Hacer admin
-                2. Añadir usuario
-                3. Quitar admin
-                4. Expulsar usuario
-                5. Salir""");
+                1. Cambiar nombre del grupo
+                2. Hacer admin
+                3. Añadir usuario
+                4. Quitar admin
+                5. Expulsar usuario
+                6. Salir""");
         return preguntaPers("Introduce una opción");
     }
     //Gestión del menu admin
@@ -380,25 +393,28 @@ public class App {
                 op = pintaMenuAdmin();
                 switch (op) {
                     case "1":
-                        hacerAdmin(chat);
+                        cambiaNombreChat(gestionaApp, chat);
                         break;
                     case "2":
-                        addUser(chat,gestionaApp);
+                        hacerAdmin(chat,gestionaApp);
                         break;
                     case "3":
-                        quitarAdmin(chat,uTemp);
+                        addUser(chat,gestionaApp);
                         break;
                     case "4":
-                        eliminarUser(chat,uTemp,gestionaApp);
+                        quitarAdmin(chat,uTemp,gestionaApp);
                         break;
                     case "5":
+                        eliminarUser(chat,uTemp,gestionaApp);
+                        break;
+                    case "6":
                         break;
                     default:
                         System.out.println("Opción no existente");
                         break;
                 }
                 Utils.limpiaPantalla();
-            } while (!op.equals("5"));
+            } while (!op.equals("6"));
         } else{
             System.out.println("No eres admin del grupo");
             Utils.pulsaParaContinuar();
@@ -429,27 +445,29 @@ public class App {
     //Pintar los usuarios
     public static void pintaUsers(ArrayList<User> users){
         for (int i = 0; i < users.size(); i++) {
-            System.out.println((i + 1) + ". " + users.get(i));
+            System.out.println((i + 1) + ". " + users.get(i).getEmail());
         }
         System.out.println((users.size() + 1) + ". Salir");
     }
     //Hace admin a un usuario
-    public static void hacerAdmin(Chat chat){
+    public static void hacerAdmin(Chat chat,GestionaApp gestionaApp){
         User user;
         do{
             user = seleccionaUser(chat.getUsersNoAdmins());
             if (user != null) {
-                chat.addUserAdmin(user);
+                if (gestionaApp.addAdmin(chat,user)) System.out.println("El usuario " + user.getEmail() + " ahora es admin del grupo");
+                else System.out.println("Error de conexión intentalo de nuevo");
             }
         }while(user != null);
     }
     //quita de admin a un usuario
-    public static void quitarAdmin(Chat chat,User uTemp){
+    public static void quitarAdmin(Chat chat,User uTemp,GestionaApp gestionaApp){
         User user;
         do{
             user = seleccionaUser(chat.getUsersAdmins(uTemp));
             if (user != null) {
-                chat.quitarUserAdmin(user);
+                if (gestionaApp.quitaAdmin(chat,user)) System.out.println("El usuario " + user.getEmail() + " ya no es admin del grupo");
+                else System.out.println("Error de conexión intentalo de nuevo");
             }
         }while(user != null);
     }
@@ -458,8 +476,8 @@ public class App {
         if (chat.buscaUser(user) != null) System.out.println("Ese usuario ya esta en el grupo");
         else if(gestionaApp.buscaUserActivos(user) == null) System.out.println("Ese usuario no existe");
         else{
-            chat.addUser(gestionaApp.buscaUserActivos(user));
-            System.out.println("Usuario añadido");
+            if (gestionaApp.addUserChat(chat,gestionaApp.buscaUserActivos(user))) System.out.println("El usuario " + user + " ha sido añadido al grupo");
+            else System.out.println("Error de conexión intentalo de nuevo");
         }
         Utils.pulsaParaContinuar();
     }
@@ -469,12 +487,18 @@ public class App {
            user = seleccionaUser(chat.getUsuarios(uTemp.getEmail()));
            if (user != null){
                if (chat.comprobarUserAdmin(user)) chat.quitarUserAdmin(user);
-               chat.borraUser(user.getEmail());
-               gestionaApp.borraChat(chat.getId());
+               gestionaApp.eliminaUserChat(chat,user);
                System.out.println(user.getEmail() + " ha sido eliminado");
                Utils.pulsaParaContinuar();
                Utils.limpiaPantalla();
            }
         }while(user != null);
+    }
+    public static void cambiaNombreChat(GestionaApp gestionaApp, Chat chat){
+        String nombre = preguntaPers("Introduce el nuevo nombre del grupo o salir para volver");
+        if (nombre.equalsIgnoreCase("salir")) System.out.println("Operación cancelada");
+        else if (nombre.equals(chat.getNombre())) System.out.println("El nombre no puede ser igual al anterior");
+        else if (gestionaApp.cambiaNombreChat(chat,nombre)) System.out.println("Nombre cambiado");
+        else System.out.println("Error de conexión intentalo de nuevo");
     }
 }

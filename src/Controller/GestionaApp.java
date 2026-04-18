@@ -21,20 +21,16 @@ public class GestionaApp {
 
     //Otros metodos
     public void mock(){
-        /*for (int i = 0; i < 50000; i++) {
-            usuariosActivos.add(new User(i,"email" + (i + 1) + "@gmail.com","1234",Utils.generaFechaAleatoria()));
+        for (int i = 0; i < 1100; i++) {
+            DAO.crearUsuario("email" + (i + 1) + "@gmail.com","1234");
         }
-        ordenaUsersActivos();
-        for (int i = 0; i < 2385; i++) {
-            usuariosBorrados.add(new User(i + 50000,"email" + (i + 50000) + "@gmail.com","1234",Utils.generaFechaAleatoria()));
-        }
-        ordenaUsersBorrados();
+        User user = DAO.buscaUsuarioEmail("email1000@gmail.com");
         for (int i = 0; i < 10; i++) {
             ArrayList<User> users = new ArrayList<>();
-            users.add(buscaUserActivos("email1000@gmail.com"));
-            users.add(buscaUserActivos("email" + (i + 1) + "@gmail.com"));
-            addChat(users,null);
-        }*/
+            users.add(user);
+            users.add(DAO.buscaUsuarioEmail("email" + (i + 1) + "@gmail.com"));
+            addChat(users,null,null,user);
+        }
     }
     public boolean addUser(String email, String clave){
         if (buscaUserActivos(email) != null) return false;
@@ -63,7 +59,7 @@ public class GestionaApp {
     }
     public User login(String email,String clave){
         usuario = DAO.iniciarSesion(email,clave);
-        if (usuario != null) chats = DAO.cargaChats(usuario);
+        if (usuario != null) cargaChats();
         return usuario;
         }
     //selection sort es mas rápido
@@ -109,6 +105,9 @@ public class GestionaApp {
             usuariosBorrados.set(posMasGrande,uAux);
         }
     }*/
+    public void cargaChats(){
+        chats = DAO.cargaChats(usuario);
+    }
     public ArrayList<Chat> buscaChats(User user){
         ArrayList<Chat> chatUser = new ArrayList<>();
         for (Chat c : chats){
@@ -124,12 +123,9 @@ public class GestionaApp {
     }
     public void addMensajeBienvenidaGrupo(String emailCreador,int idChat){
         DAO.addMensaje(new Mensaje(new User(1,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat),buscaChat(idChat));
-        chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(1,"Bienvenido"),idChat);
+        chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(0,"Bienvenido"),idChat);
     }
 
-    public void borraChat(int id) {
-        chats.remove(getChat(id));
-    }
 
     public Chat getChat(int id) {
         for (Chat c : chats){
@@ -137,8 +133,8 @@ public class GestionaApp {
         }
         return null;
     }
-    public boolean addChat(ArrayList<User> users,User uTemp){
-        Chat chat = DAO.crearChat(users,uTemp);
+    public boolean addChat(ArrayList<User> users,User uTemp,String nombre,User user){
+        Chat chat = DAO.crearChat(users,uTemp,nombre,user);
         if (chat != null){
             chats.addFirst(chat);
             return true;
@@ -158,22 +154,29 @@ public class GestionaApp {
         }
         return null;
     }
-    public void borrarChat(Chat chat,User uTemp){
-        borraChat(chat.getId());
-        if (chat.comprobarUserAdmin(uTemp)) chat.quitarUserAdmin(uTemp);
-        if (chat.getUsuarios().size() == 2) chats.remove(chat);
-        else{
-            chat.borraUser(uTemp.getEmail());
-            ArrayList<User> users = chat.getUsuarios();
-            chats.remove(chat);
-            if (buscaChat(users) == null){
-                chats.add(chat);
+    public boolean borrarChat(Chat chat,User uTemp){
+        if (DAO.eliminaUserChat(uTemp,chat)) {
+            chats.remove(getChat(chat.getId()));
+            if (chat.comprobarUserAdmin(uTemp)) chat.quitarUserAdmin(uTemp);
+            if (chat.getUsuarios().size() == 2) chats.remove(chat);
+            else {
+                chat.borraUser(uTemp.getEmail());
+                ArrayList<User> users = chat.getUsuarios();
+                chats.remove(chat);
+                if (buscaChat(users) == null) {
+                    chats.add(chat);
+                }
             }
+            return true;
         }
+        return false;
     }
-    public boolean eliminaChat(Chat chat,User user){
-        chats.remove(chat);
-        return DAO.eliminaUserChat(user,chat);
+    public boolean eliminaUserChat(Chat chat,User user){
+        if (DAO.eliminaUserChat(user, chat)){
+            chat.borraUser(user.getEmail());
+            return true;
+        }
+        return false;
     }
     public void borrarCuenta(User user){
         for (Chat c: buscaChats(user)){
@@ -181,6 +184,34 @@ public class GestionaApp {
         }
         DAO.actualizaFecha(user);
         DAO.borraUsuario(user);
+    }
+    public boolean addAdmin(Chat chat,User user){
+        if (DAO.addUserAdminChat(user,chat)) {
+            chat.addUserAdmin(user);
+            return true;
+        }
+        return false;
+    }
+    public boolean quitaAdmin(Chat chat, User user){
+        if (DAO.quitarUserAdminChat(user, chat)) {
+            chat.quitarUserAdmin(user);
+            return true;
+        }
+        return false;
+    }
+    public boolean addUserChat(Chat chat, User user){
+        if (DAO.addUserChat(user, chat)){
+            chat.addUser(user);
+            return true;
+        }
+        return false;
+    }
+    public boolean cambiaNombreChat(Chat chat, String nombre){
+        if (DAO.cambiarNombreChat(chat, nombre)){
+            chat.setNombre(nombre);
+            return true;
+        }
+        return false;
     }
     public void ordenaChats(){
         ArrayList<Chat> chatsOrdenados = new ArrayList<>();
@@ -198,5 +229,15 @@ public class GestionaApp {
             chatMasAntiguo = null;
         }
         chats = chatsOrdenados;
+    }
+    public boolean cambiaEmail(String email,User user){
+        if (DAO.cambiarEmailUsuario(user,email)){
+            user.setEmail(email);
+            return true;
+        }
+        return false;
+    }
+    public boolean cambiaClave(String clave,User user){
+        return DAO.cambiarClaveUsuario(user, clave);
     }
 }

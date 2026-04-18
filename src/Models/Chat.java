@@ -9,21 +9,26 @@ public class Chat {
     private ArrayList<User> usuarios;
     private LocalDateTime ultimoMensaje;
     private ArrayList<User> usersAdmins;
+    private String nombre;
 
-    public Chat(int id, ArrayList<User> usuarios, User uTemp) {
+    public Chat(int id, ArrayList<User> usuarios, User user,String nombre,User uTemp) {
         this.id = id;
         this.usuarios = usuarios;
         ultimoMensaje = LocalDateTime.now();
         usersAdmins = new ArrayList<>();
-        usersAdmins.add(uTemp);
+        usersAdmins.add(user);
         mensajes = new ArrayList<>();
+        this.nombre = nombre;
+        ajustaNombre(uTemp);
     }
 
-    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins) {
+    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins,String nombre,User uTemp) {
         this.id = id;
         this.usuarios = usuarios;
         this.usersAdmins = usersAdmins;
         this.mensajes = mensajes;
+        this.nombre = nombre;
+        ajustaNombre(uTemp);
     }
 
     public int getId() {
@@ -80,6 +85,14 @@ public class Chat {
         this.usersAdmins = usersAdmins;
     }
 
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
     public User buscaUser(String email){
         for (User user : usuarios){
             if (user.getEmail().equals(email)) return user;
@@ -130,5 +143,17 @@ public class Chat {
     public void addUser(User user){
         usuarios.add(user);
     }
+    public void ajustaNombre(User uTemp){
+        if (nombre.startsWith("Chat de ") && nombre.contains(uTemp.getEmail())) {
+            int inicio = nombre.indexOf(uTemp.getEmail());
+            int longitud = uTemp.getEmail().length();
+            if (nombre.length() > inicio + longitud + 2 && inicio == 8)
+                nombre = nombre.substring(0, inicio) + nombre.substring(inicio + longitud + 2);
+            else if (nombre.length() <= inicio + longitud + 2) nombre = nombre.substring(0, inicio - 2);
+            else nombre = nombre.substring(0, inicio - 2) + nombre.substring(inicio + longitud + 2);
+            nombre = nombre.replace("Chat de ", "Chat con ");
+        }
+    }
+
 
 }
