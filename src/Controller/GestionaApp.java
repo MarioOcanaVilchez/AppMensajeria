@@ -14,6 +14,7 @@ public class GestionaApp implements Serializable {
     private User usuario;
     private ArrayList<Chat> chats;
     public GestionaApp() {
+        Persistence.existenCarpetas();
         GestionaApp gestionaApp = Persistence.CojeUser();
         if (gestionaApp != null){
             usuario = gestionaApp.getUsuario();
@@ -274,6 +275,7 @@ public class GestionaApp implements Serializable {
             }
         }while (true);
     }
+
 
 
 }

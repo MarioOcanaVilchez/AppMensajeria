@@ -23,6 +23,7 @@ public class Persistence {
             String id = obtenId();
             if (id != null) {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream("Data/UsuarioEnUso/" + id));
+                ois.close();
                 return (GestionaApp) ois.readObject();
             }
         } catch (IOException e) {
@@ -53,5 +54,25 @@ public class Persistence {
         String [] ficheros = directorio.list();
         if (ficheros != null && ficheros.length == 1) return ficheros[0];
         return null;
+    }
+    public static void existenCarpetas(){
+        File file = new File("Data");
+        if (file.exists()){
+            if (new File("Data/Usuarios").exists() && new File("Data/UsuarioEnUso").exists()) return;
+            else {
+                file = new File("Data/Usuarios/");
+                file.mkdir();
+                file = new File("Data/UsuarioEnUso/");
+                file.mkdir();
+            }
+        } else {
+            file = new File("Data/");
+            file.mkdir();
+            file = new File("Data/Usuarios/");
+            file.mkdir();
+            file = new File("Data/UsuarioEnUso/");
+            file.mkdir();
+
+        }
     }
 }
