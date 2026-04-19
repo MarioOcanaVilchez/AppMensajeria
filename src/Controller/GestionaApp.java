@@ -70,8 +70,10 @@ public class GestionaApp implements Serializable {
     }
     public User login(String email,String clave){
         usuario = DAO.iniciarSesion(email,clave);
-        if (usuario != null) cargaChats();
-        Persistence.guardaUser(this);
+        if (usuario != null) {
+            cargaChats();
+            Persistence.guardaUser(this);
+        }
         return usuario;
         }
     //selection sort es mas rápido
