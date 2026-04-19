@@ -1,9 +1,10 @@
 package Models;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-public class Chat {
+public class Chat implements Serializable {
     private int id;
     private ArrayList<Mensaje> mensajes;
     private ArrayList<User> usuarios;

@@ -5,23 +5,33 @@ import Data.Data;
 import Models.Chat;
 import Models.User;
 import Models.Mensaje;
+import Persistence.Persistence;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class GestionaApp {
+public class GestionaApp implements Serializable {
     private User usuario;
     private ArrayList<Chat> chats;
     public GestionaApp() {
-        chats = new ArrayList<>();
+        GestionaApp gestionaApp = Persistence.CojeUser();
+        if (gestionaApp != null){
+            usuario = gestionaApp.getUsuario();
+            chats = gestionaApp.getChats();
+        } else chats = new ArrayList<>();
     }
 
     public ArrayList<Chat> getChats() {
         return chats;
     }
 
+    public User getUsuario() {
+        return usuario;
+    }
+
     //Otros metodos
     public void mock(){
-        for (int i = 0; i < 1100; i++) {
+        for (int i = 0; i < 50000; i++) {
             DAO.crearUsuario("email" + (i + 1) + "@gmail.com","1234");
         }
         User user = DAO.buscaUsuarioEmail("email1000@gmail.com");
@@ -60,6 +70,7 @@ public class GestionaApp {
     public User login(String email,String clave){
         usuario = DAO.iniciarSesion(email,clave);
         if (usuario != null) cargaChats();
+        Persistence.guardaUser(this);
         return usuario;
         }
     //selection sort es mas rápido
@@ -106,7 +117,7 @@ public class GestionaApp {
         }
     }*/
     public void cargaChats(){
-        chats = DAO.cargaChats(usuario);
+         chats = DAO.cargaChats(usuario);
     }
     public ArrayList<Chat> buscaChats(User user){
         ArrayList<Chat> chatUser = new ArrayList<>();
@@ -184,6 +195,7 @@ public class GestionaApp {
         }
         DAO.actualizaFecha(user);
         DAO.borraUsuario(user);
+        Persistence.eliminaUsuario(user);
     }
     public boolean addAdmin(Chat chat,User user){
         if (DAO.addUserAdminChat(user,chat)) {
@@ -240,4 +252,28 @@ public class GestionaApp {
     public boolean cambiaClave(String clave,User user){
         return DAO.cambiarClaveUsuario(user, clave);
     }
+    public void eliminaUsuarioEnUso(){
+        Persistence.eliminaUsuariosEnUso();
+    }
+    public boolean guardaUser(){
+        return Persistence.guardaUser(this);
+    }
+    public boolean buscaCambios(){
+        do {
+            if (DAO.cargaChats(usuario) != chats) return true;
+        }while (true);
+    }
+    public boolean buscaCambios(Chat chat){
+        ArrayList<Chat> chats = null;
+        do {
+                chats = DAO.cargaChats(usuario);
+            if (chats != null) {
+                for (Chat c : chats) {
+                    if (c.getId() == chat.getId() && c.getMensajes() != chat.getMensajes()) return true;
+                }
+            }
+        }while (true);
+    }
+
+
 }

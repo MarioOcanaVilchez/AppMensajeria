@@ -16,10 +16,13 @@ public class App {
 
     public static void runApp() {
         GestionaApp gestionaApp = new GestionaApp();
-        String op;
-        User uTemp;
+        String op = null;
+        User uTemp = gestionaApp.getUsuario();
+        if (uTemp != null) gestionaApp.cargaChats();
         do {
-            uTemp = menuInicio(gestionaApp);
+            if (op == null){
+                if (uTemp == null) uTemp = menuInicio(gestionaApp);
+            } else uTemp = menuInicio(gestionaApp);
             if (uTemp != null) {
                 Utils.limpiaPantalla();
                 do {
@@ -44,11 +47,13 @@ public class App {
                             borrarCuenta(gestionaApp, uTemp);
                             break;
                         case "7":
+                            gestionaApp.eliminaUsuarioEnUso();
                             break;
                         default:
                             System.out.println("Opción no existente");
                     }
                     if (!op.equals("7")){
+                        gestionaApp.guardaUser();
                         Utils.pulsaParaContinuar();
                         Utils.limpiaPantalla();
                     }
@@ -68,7 +73,10 @@ public class App {
                     email = preguntaPers("Introduce tu email");
                     clave = preguntaPers("Introduce tu contraseña");
                     usuario = gestionaApp.login(email, clave);
-                    if (usuario != null) return usuario;
+                    if (usuario != null){
+                        gestionaApp.guardaUser();
+                        return usuario;
+                    }
                     else System.out.println("Usuario o contraseña incorrectos");
                     break;
                 case "2":
@@ -228,12 +236,10 @@ public class App {
     public static void verChats(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
         do {
-            gestionaApp.cargaChats();
             chat = seleccionaChat(gestionaApp);
             if (chat != null) usaChat(chat, gestionaApp, uTemp);
         } while (chat != null);
     }
-
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
         gestionaApp.cargaChats();
