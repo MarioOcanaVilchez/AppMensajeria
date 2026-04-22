@@ -2,16 +2,19 @@ package Models;
 
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public class Mensaje implements Serializable {
     private User usuario;
     private String texto;
     private int idChat;
+    private LocalDateTime fecha;
 
-    public Mensaje(User usuario, String texto, int idChat) {
+    public Mensaje(User usuario, String texto, int idChat,LocalDateTime fecha) {
         this.usuario = usuario;
         this.texto = texto;
         this.idChat = idChat;
+        this.fecha = fecha;
     }
 
     public User getUsuario() {
@@ -36,5 +39,13 @@ public class Mensaje implements Serializable {
 
     public void setIdChat(int idChat) {
         this.idChat = idChat;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDateTime fecha) {
+        this.fecha = fecha;
     }
 }

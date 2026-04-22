@@ -8,17 +8,20 @@ import Models.Mensaje;
 import Persistence.Persistence;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class GestionaApp implements Serializable {
     private User usuario;
     private ArrayList<Chat> chats;
+    private int chatEnUso;
     public GestionaApp() {
         Persistence.existenCarpetas();
         GestionaApp gestionaApp = Persistence.CojeUser();
         if (gestionaApp != null){
             usuario = gestionaApp.getUsuario();
             chats = gestionaApp.getChats();
+            chatEnUso = gestionaApp.chatEnUso;
         } else chats = new ArrayList<>();
     }
 
@@ -28,6 +31,14 @@ public class GestionaApp implements Serializable {
 
     public User getUsuario() {
         return usuario;
+    }
+
+    public int getChatEnUso() {
+        return chatEnUso;
+    }
+
+    public void setChatEnUso(int chatEnUso) {
+        this.chatEnUso = chatEnUso;
     }
 
     //Otros metodos
@@ -136,7 +147,7 @@ public class GestionaApp implements Serializable {
         chats.addFirst(chat);
     }
     public void addMensajeBienvenidaGrupo(String emailCreador,int idChat){
-        DAO.addMensaje(new Mensaje(new User(1,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat),buscaChat(idChat));
+        DAO.addMensaje(new Mensaje(new User(1,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat,LocalDateTime.now()),buscaChat(idChat));
         chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(0,"Bienvenido"),idChat);
     }
 
@@ -261,21 +272,33 @@ public class GestionaApp implements Serializable {
     public boolean guardaUser(){
         return Persistence.guardaUser(this);
     }
-    public boolean buscaCambios(){
-        do {
-            if (DAO.cargaChats(usuario) != chats) return true;
-        }while (true);
+    public void cambiaChatUso(int chat){
+        chatEnUso = chat;
+        Persistence.guardaUser(this);
     }
-    public boolean buscaCambios(Chat chat){
-        ArrayList<Chat> chats = null;
-        do {
+    public boolean ultimoMensajeUser(){
+        return buscaChat(chatEnUso).getMensajes().getLast().getUsuario().getId() == usuario.getId();
+    }
+
+    public boolean buscaCambios(){
+        ArrayList<Chat> chats;
+        if (chatEnUso != -1) {
                 chats = DAO.cargaChats(usuario);
-            if (chats != null) {
-                for (Chat c : chats) {
-                    if (c.getId() == chat.getId() && c.getMensajes() != chat.getMensajes()) return true;
-                }
-            }
-        }while (true);
+                if (chats != null) {
+                    for (Chat c : chats) {
+                        if (c.getId() == chatEnUso){
+                            if(!c.getUltimoMensaje().isEqual(buscaChat(chatEnUso).getUltimoMensaje())){
+                                return true;
+                        }
+
+                        }
+                    }
+                } else return false;
+        } else {
+                chats = DAO.cargaChats(usuario);
+                if (chats != this.chats) return true;
+        }
+        return false;
     }
 
 

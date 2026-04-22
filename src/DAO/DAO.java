@@ -260,16 +260,16 @@ public class DAO {
                     resultados = statement.executeQuery("select * from mensajeUsuario where idChat = " + id + " and idUserReceptor = " + user.getId() + " order by fechaEnviado asc");
                     //Cogemos los usuarios de los chats en los que esta
                     while(resultados.next()) {
-                        if (buscaUsuarioId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id));
-                        else if (buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id));
-                        else mensajes.add(new Mensaje(new User(0,"Administración"),resultados.getString("texto"),id));
+                        if (buscaUsuarioId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
+                        else if (buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
+                        else mensajes.add(new Mensaje(new User(0,"Administración"),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
                     }
                     statement = conexionBD.createStatement();
                     resultados = statement.executeQuery("select * from chats where id = " + id + " order by ultimoMensaje desc limit 1");
                     //Cogemos los usuarios de los chats en los que esta
                     resultados.next();
                     nombre = resultados.getString("nombre");
-                    chats.add(new Chat(id,mensajes,usuarios,admins,nombre,user));
+                    chats.add(new Chat(id,mensajes,usuarios,admins,nombre,user,Utils.pasarStringFecha(resultados.getString("ultimoMensaje"))));
                 }
                 cierraConexion(conexionBD);
             }
@@ -434,6 +434,7 @@ public class DAO {
             try {
                 PreparedStatement ps = conexionBD.prepareStatement("update chats set nombre ='" + nombre + "' where id = " + chat.getId());
                 ps.executeUpdate();
+                cierraConexion(conexionBD);
                 return true;
             } catch (SQLException e) {
                 return false;
@@ -447,6 +448,7 @@ public class DAO {
             try {
                 PreparedStatement ps = conexionBD.prepareStatement("update usuariosActivos set email ='" + nombre + "' where id = " + user.getId());
                 ps.executeUpdate();
+                cierraConexion(conexionBD);
                 return true;
             } catch (SQLException e) {
                 return false;
@@ -460,6 +462,7 @@ public class DAO {
             try {
                 PreparedStatement ps = conexionBD.prepareStatement("update usuariosActivos set clave ='" + clave + "' where id = " + user.getId());
                 ps.executeUpdate();
+                cierraConexion(conexionBD);
                 return true;
             } catch (SQLException e) {
                 return false;

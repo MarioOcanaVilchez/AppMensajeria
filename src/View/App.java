@@ -5,8 +5,12 @@ import Models.Chat;
 import Models.Mensaje;
 import Models.User;
 import Utils.Utils;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class App {
     static void main() {
@@ -243,20 +247,29 @@ public class App {
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
         gestionaApp.cargaChats();
+        gestionaApp.cambiaChatUso(chat.getId());
         pintaChat(chat);
         String mensaje;
         do {
+            Pruebas pruebas = new Pruebas();
+            ExecutorService hilo = Executors.newSingleThreadExecutor();
+            hilo.submit(pruebas);
             mensaje = preguntaPers("mensaje o salir o admin");
+            hilo.shutdownNow();
             if (mensaje.equalsIgnoreCase("salir")){
+                gestionaApp.cambiaChatUso(-1);
                 System.out.println("Volviendo al menú");
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
+                gestionaApp.cargaChats();
+                chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 Utils.limpiaPantalla();
                 pintaChat(chat);
             } else {
-                gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId()));
+                gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId(), LocalDateTime.now()));
                 Utils.limpiaPantalla();
                 gestionaApp.cargaChats();
+                chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 pintaChat(chat);
             }
         } while (!mensaje.equalsIgnoreCase("salir"));

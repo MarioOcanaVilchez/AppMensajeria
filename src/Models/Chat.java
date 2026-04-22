@@ -23,11 +23,12 @@ public class Chat implements Serializable {
         ajustaNombre(uTemp);
     }
 
-    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins,String nombre,User uTemp) {
+    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins,String nombre,User uTemp,LocalDateTime ultimoMensaje) {
         this.id = id;
         this.usuarios = usuarios;
         this.usersAdmins = usersAdmins;
         this.mensajes = mensajes;
+        this.ultimoMensaje = ultimoMensaje;
         this.nombre = nombre;
         ajustaNombre(uTemp);
     }
@@ -103,7 +104,7 @@ public class Chat implements Serializable {
     public void addMensaje(String mensaje,User usuario,int idChat){
         if (usuario.getEmail().equals("Bienvenido") || buscaUser(usuario.getEmail()) != null){
             ultimoMensaje = LocalDateTime.now();
-            mensajes.add(new Mensaje(usuario,mensaje,idChat));
+            mensajes.add(new Mensaje(usuario,mensaje,idChat,LocalDateTime.now()));
         }
     }
 

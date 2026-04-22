@@ -23,8 +23,9 @@ public class Persistence {
             String id = obtenId();
             if (id != null) {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream("Data/UsuarioEnUso/" + id));
+                GestionaApp gestionaApp = (GestionaApp) ois.readObject();
                 ois.close();
-                return (GestionaApp) ois.readObject();
+                return gestionaApp;
             }
         } catch (IOException e) {
             return null;
