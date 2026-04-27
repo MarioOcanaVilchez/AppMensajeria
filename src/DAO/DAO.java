@@ -278,6 +278,48 @@ public class DAO {
         }
         return chats;
     }
+    public static Chat cargaChat(User user,int idChat){
+        Chat chat = null;
+        try {
+            Connection conexionBD = iniciarConexion();
+            if(conexionBD != null) {
+                    ArrayList<User> usuarios = new ArrayList<>();
+                    ArrayList<User> admins = new ArrayList<>();
+                    ArrayList<Mensaje> mensajes = new ArrayList<>();
+                    String nombre;
+                    Statement statement = conexionBD.createStatement();
+                    ResultSet resultados = statement.executeQuery("select * from chatUsuario CU inner join usuariosActivos UA on CU.idUser = UA.id where CU.id = " + idChat);
+                    //Cogemos los usuarios de los chats en los que esta
+                    while(resultados.next()) {
+                        usuarios.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
+                    }
+                    statement = conexionBD.createStatement();
+                    resultados = statement.executeQuery("select * from userAdmin UAD inner join usuariosActivos UA on UA.id = UAD.idUser where UAD.id = " + idChat);
+                    //Cogemos los usuarios de los chats en los que esta
+                    while(resultados.next()) {
+                        admins.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
+                    }
+                    statement = conexionBD.createStatement();
+                    resultados = statement.executeQuery("select * from mensajeUsuario where idChat = " + idChat + " and idUserReceptor = " + user.getId() + " order by fechaEnviado asc");
+                    //Cogemos los usuarios de los chats en los que esta
+                    while(resultados.next()) {
+                        if (buscaUsuarioId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),idChat,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
+                        else if (buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")) != null) mensajes.add(new Mensaje(buscaUsuarioBorradoId(resultados.getInt("idUserEnvia")),resultados.getString("texto"),idChat,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
+                        else mensajes.add(new Mensaje(new User(0,"Administración"),resultados.getString("texto"),idChat,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
+                    }
+                    statement = conexionBD.createStatement();
+                    resultados = statement.executeQuery("select * from chats where id = " + idChat + " order by ultimoMensaje desc limit 1");
+                    //Cogemos los usuarios de los chats en los que esta
+                    resultados.next();
+                    nombre = resultados.getString("nombre");
+                    chat = new Chat(idChat,mensajes,usuarios,admins,nombre,user,Utils.pasarStringFecha(resultados.getString("ultimoMensaje")));
+                }
+                cierraConexion(conexionBD);
+        } catch (SQLException e) {
+            return null;
+        }
+        return chat;
+    }
     public static void addMensaje(Mensaje mensaje,Chat chat) {
         Connection conexionBD = iniciarConexion();
         if (conexionBD != null) {

@@ -281,23 +281,16 @@ public class GestionaApp implements Serializable {
     }
 
     public boolean buscaCambios(){
-        ArrayList<Chat> chats;
+        Chat chat = null;
         if (chatEnUso != -1) {
-                chats = DAO.cargaChats(usuario);
-                if (chats != null) {
-                    for (Chat c : chats) {
-                        if (c.getId() == chatEnUso){
-                            if(!c.getUltimoMensaje().isEqual(buscaChat(chatEnUso).getUltimoMensaje())){
-                                return true;
-                        }
-
-                        }
-                    }
+                chat = DAO.cargaChat(usuario,chatEnUso);
+                if (chat != null) {
+                            if(!chat.getUltimoMensaje().isEqual(buscaChat(chatEnUso).getUltimoMensaje())) return true;
                 } else return false;
-        } else {
+        }/* else {
                 chats = DAO.cargaChats(usuario);
                 if (chats != this.chats) return true;
-        }
+        }*/
         return false;
     }
 

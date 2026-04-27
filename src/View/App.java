@@ -167,8 +167,6 @@ public class App {
         System.out.println((chats.size() + 1) + ". Salir");
     }
 
-    //Pinta los usuarios del chat para identificarlo
-
 
     //Gestión de cambiar datos
     public static void cambiarDatos(User uTemp, GestionaApp gestionaApp) {
@@ -251,13 +249,14 @@ public class App {
         pintaChat(chat);
         String mensaje;
         do {
-            Pruebas pruebas = new Pruebas();
+            RecargaChat recargaChat = new RecargaChat();
             ExecutorService hilo = Executors.newSingleThreadExecutor();
-            hilo.submit(pruebas);
-            mensaje = preguntaPers("mensaje o salir o admin");
+            hilo.submit(recargaChat);
+            mensaje = preguntaPers("mensaje o salir para volver al menú o admin para entrar en la configuración del grupo");
             hilo.shutdownNow();
             if (mensaje.equalsIgnoreCase("salir")){
                 gestionaApp.cambiaChatUso(-1);
+                gestionaApp.cargaChats();
                 System.out.println("Volviendo al menú");
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
@@ -301,31 +300,41 @@ public class App {
         String email,nombre;
         int cont = 1;
         do {
-            email = preguntaPers("Introduce al miembro " + cont + " del chat o crear para terminar");
-            if (!email.equalsIgnoreCase("crear")) {
-                if (gestionaApp.buscaUserActivos(email) == null) System.out.println("Usuario no existente");
-                else if (!users.contains(gestionaApp.buscaUserActivos(email))) {
-                    users.add(gestionaApp.buscaUserActivos(email));
-                    System.out.println("Usuario añadido");
-                    cont++;
-                } else System.out.println("Usuario añadido previamente");
+            email = preguntaPers("Introduce al miembro " + cont + " del chat o crear para pasar a la configuración del grupo o salir para cancelar");
+            if (!email.equalsIgnoreCase("salir")) {
+                if (!email.equalsIgnoreCase("crear")) {
+                    if (gestionaApp.buscaUserActivos(email) == null) System.out.println("Usuario no existente");
+                    else if (!users.contains(gestionaApp.buscaUserActivos(email))) {
+                        users.add(gestionaApp.buscaUserActivos(email));
+                        System.out.println("Usuario añadido");
+                        cont++;
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        Utils.limpiaPantalla();
+                    } else System.out.println("Usuario añadido previamente");
+                }
             }
-        } while (!email.equalsIgnoreCase("crear"));
-        if (users.isEmpty() || users.size() == 1)
-            System.out.println("No se puede crear un chat para ti mismo ni con 2 miembros");
-        else {
-            users.add(uTemp);
-            if (gestionaApp.buscaChat(users) == null) {
-                nombre = pideNombre();
-                gestionaApp.addChat(users, uTemp,nombre,uTemp);
-                System.out.println("Chat creado");
-                Utils.pulsaParaContinuar();
-                Utils.limpiaPantalla();
-                gestionaApp.addMensajeBienvenidaGrupo(uTemp.getEmail(),gestionaApp.getChats().getFirst().getId());
-                usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
+        } while (!email.equalsIgnoreCase("crear") && !email.equalsIgnoreCase("salir"));
+        if (!email.equalsIgnoreCase("salir")) {
+            if (users.isEmpty() || users.size() == 1)
+                System.out.println("No se puede crear un chat para ti mismo ni con 2 miembros");
+            else {
+                users.add(uTemp);
+                if (gestionaApp.buscaChat(users) == null) {
+                    nombre = pideNombre();
+                    gestionaApp.addChat(users, uTemp, nombre, uTemp);
+                    System.out.println("Chat creado");
+                    Utils.pulsaParaContinuar();
+                    Utils.limpiaPantalla();
+                    gestionaApp.addMensajeBienvenidaGrupo(uTemp.getEmail(), gestionaApp.getChats().getFirst().getId());
+                    usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
 
-            } else System.out.println("Chat ya existente");
-        }
+                } else System.out.println("Chat ya existente");
+            }
+        } else System.out.println("Operación cancelada");
     }
     public static String pideNombre(){
         String nombre = null;
@@ -336,25 +345,27 @@ public class App {
 
     //Crea un chat con una unica persona
     public static void crearChat(GestionaApp gestionaApp, User uTemp) {
-        String email = preguntaPers("Introduce el nombre del usuario");
-        if (email.equals(uTemp.getEmail())) System.out.println("No puedes crear un chat contigo mismo");
-        else if (gestionaApp.buscaUserActivos(email) != null) {
-            ArrayList<User> users = new ArrayList<>();
-            users.add(uTemp);
-            users.add(gestionaApp.buscaUserActivos(email));
-            if (gestionaApp.buscaChat(users) == null) {
-                if (gestionaApp.addChat(users, null,null,uTemp)) {
-                    Utils.limpiaPantalla();
-                    usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
-                } else {
-                    System.out.println("Error al crear el chat comprueba la conexión");
-                }
-            } else usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
-        } else {
-            System.out.println("Usuario no existente");
-            Utils.pulsaParaContinuar();
-            Utils.limpiaPantalla();
-        }
+        String email = preguntaPers("Introduce el nombre del usuario o salir para volver");
+        if (!email.equalsIgnoreCase("salir")) {
+            if (email.equals(uTemp.getEmail())) System.out.println("No puedes crear un chat contigo mismo");
+            else if (gestionaApp.buscaUserActivos(email) != null) {
+                ArrayList<User> users = new ArrayList<>();
+                users.add(uTemp);
+                users.add(gestionaApp.buscaUserActivos(email));
+                if (gestionaApp.buscaChat(users) == null) {
+                    if (gestionaApp.addChat(users, null, null, uTemp)) {
+                        Utils.limpiaPantalla();
+                        usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
+                    } else {
+                        System.out.println("Error al crear el chat comprueba la conexión");
+                    }
+                } else usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
+            } else {
+                System.out.println("Usuario no existente");
+                Utils.pulsaParaContinuar();
+                Utils.limpiaPantalla();
+            }
+        } else System.out.println("Operación cancelada");
     }
 
     //Borra una combersación

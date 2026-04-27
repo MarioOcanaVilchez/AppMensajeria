@@ -4,9 +4,7 @@ import Controller.GestionaApp;
 import Utils.Utils;
 
 
-public class Pruebas implements Runnable{
-//todo problemas muy serios
-    //La ultima vez dio excepcion y dejaba de recargarse el chat
+public class RecargaChat implements Runnable{
     @Override
     public void run() {
         try {
