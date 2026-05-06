@@ -175,23 +175,26 @@ public class GestionaApp implements Serializable {
     //Buscar en base de datos
     public Chat buscaChat(ArrayList<User> users){
         for (Chat c: chats){
-            if (c.getUsuarios().containsAll(users) && c.getUsuarios().size() == users.size()) return c;
+            if (c.getUsuarios().size() == users.size()){
+                if (estanUsuarios(users,c)) return c;
+            }
         }
         return null;
+    }
+    public boolean estanUsuarios(ArrayList<User> users,Chat c){
+        boolean estaUser;
+        for (User user : c.getUsuarios()){
+            estaUser = false;
+            for (User u : users){
+                if (user.getId() == u.getId()) estaUser = true;
+            }
+            if (!estaUser) return false;
+        }
+        return true;
     }
     public boolean borrarChat(Chat chat,User uTemp){
         if (DAO.eliminaUserChat(uTemp,chat)) {
             chats.remove(getChat(chat.getId()));
-            if (chat.comprobarUserAdmin(uTemp)) chat.quitarUserAdmin(uTemp);
-            if (chat.getUsuarios().size() == 2) chats.remove(chat);
-            else {
-                chat.borraUser(uTemp.getEmail());
-                ArrayList<User> users = chat.getUsuarios();
-                chats.remove(chat);
-                if (buscaChat(users) == null) {
-                    chats.add(chat);
-                }
-            }
             return true;
         }
         return false;

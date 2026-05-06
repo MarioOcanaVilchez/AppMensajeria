@@ -323,16 +323,13 @@ public class App {
                 System.out.println("No se puede crear un chat para ti mismo ni con 2 miembros");
             else {
                 users.add(uTemp);
-                if (gestionaApp.buscaChat(users) == null) {
-                    nombre = pideNombre();
-                    gestionaApp.addChat(users, uTemp, nombre, uTemp);
-                    System.out.println("Chat creado");
-                    Utils.pulsaParaContinuar();
-                    Utils.limpiaPantalla();
-                    gestionaApp.addMensajeBienvenidaGrupo(uTemp.getEmail(), gestionaApp.getChats().getFirst().getId());
-                    usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
-
-                } else System.out.println("Chat ya existente");
+                nombre = pideNombre();
+                gestionaApp.addChat(users, uTemp, nombre, uTemp);
+                System.out.println("Chat creado");
+                Utils.pulsaParaContinuar();
+                Utils.limpiaPantalla();
+                gestionaApp.addMensajeBienvenidaGrupo(uTemp.getEmail(), gestionaApp.getChats().getFirst().getId());
+                usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
             }
         } else System.out.println("Operación cancelada");
     }
@@ -359,7 +356,10 @@ public class App {
                     } else {
                         System.out.println("Error al crear el chat comprueba la conexión");
                     }
-                } else usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
+                } else {
+                    Utils.limpiaPantalla();
+                    usaChat(gestionaApp.buscaChat(users), gestionaApp, uTemp);
+                }
             } else {
                 System.out.println("Usuario no existente");
                 Utils.pulsaParaContinuar();
@@ -374,7 +374,6 @@ public class App {
         do {
             chat = seleccionaChat(gestionaApp);
             if (chat != null) {
-                //gestionaApp.borrarChat(chat, uTemp);
                 if (gestionaApp.borrarChat(chat,uTemp)) System.out.println("Chat eliminado");
                 else System.out.println("Error de conexión intentalo de nuevo");
             }
