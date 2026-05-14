@@ -1,6 +1,9 @@
 package Controller;
 
-import DAO.DAO;
+import DAO.DaoChatSQL;
+import DAO.DaoManager;
+import DAO.DaoMensajeSQL;
+import DAO.DaoUserSQL;
 import Data.Data;
 import Models.Chat;
 import Models.User;
@@ -15,7 +18,10 @@ public class GestionaApp implements Serializable {
     private User usuario;
     private ArrayList<Chat> chats;
     private int chatEnUso;
+    private transient DaoManager dao;
+
     public GestionaApp() {
+        dao = DaoManager.getSinglentonInstance();
         Persistence.existenCarpetas();
         GestionaApp gestionaApp = Persistence.CojeUser();
         if (gestionaApp != null){
@@ -24,6 +30,7 @@ public class GestionaApp implements Serializable {
             chatEnUso = gestionaApp.chatEnUso;
         } else chats = new ArrayList<>();
     }
+
 
     public ArrayList<Chat> getChats() {
         return chats;
@@ -41,49 +48,57 @@ public class GestionaApp implements Serializable {
         this.chatEnUso = chatEnUso;
     }
 
+    public DaoManager getDao() {
+        return dao;
+    }
+
+    public void setDao(DaoManager dao) {
+        this.dao = dao;
+    }
+
     //Otros metodos
     public void mock(){
         for (int i = 0; i < 50000; i++) {
-            DAO.crearUsuario("email" + (i + 1) + "@gmail.com","1234");
+            DaoUserSQL.crearUsuario("email" + (i + 1) + "@gmail.com","1234",dao);
         }
-        User user = DAO.buscaUsuarioEmail("email1000@gmail.com");
+        User user = DaoUserSQL.buscaUsuarioEmail("email1000@gmail.com",dao);
         for (int i = 0; i < 10; i++) {
             ArrayList<User> users = new ArrayList<>();
             users.add(user);
-            users.add(DAO.buscaUsuarioEmail("email" + (i + 1) + "@gmail.com"));
+            users.add(DaoUserSQL.buscaUsuarioEmail("email" + (i + 1) + "@gmail.com",dao));
             addChat(users,null,null,user);
         }
     }
     public boolean addUser(String email, String clave){
         if (buscaUserActivos(email) != null) return false;
         if (buscaUserBorrados(email) != null) borrarUserBorrados(email);
-        else{ DAO.crearUsuario(email,clave);
+        else{ DaoUserSQL.crearUsuario(email,clave,dao);
             return true;
         }
         return false;
     }
     public User recuperarUser(String email,String clave){
-        User user = DAO.buscaUsuarioBorradoEmail(email);
+        User user = DaoUserSQL.buscaUsuarioBorradoEmail(email,dao);
         if (user != null) {
-            return DAO.recuperaUser(user,clave);
+            return DaoUserSQL.recuperaUser(user,clave,dao);
         }
         return null;
     }
 
     public User buscaUserActivos(String email){
-        return DAO.buscaUsuarioEmail(email);
+        return DaoUserSQL.buscaUsuarioEmail(email,dao);
     }
     public User buscaUserBorrados(String email){
-        return DAO.buscaUsuarioBorradoEmail(email);
+        return DaoUserSQL.buscaUsuarioBorradoEmail(email,dao);
     }
     public void borrarUserBorrados(String email){
-        DAO.borraUserBorrado(DAO.buscaUsuarioBorradoEmail(email));
+        DaoUserSQL.borraUserBorrado(DaoUserSQL.buscaUsuarioBorradoEmail(email,dao),dao);
     }
     public User login(String email,String clave){
-        usuario = DAO.iniciarSesion(email,clave);
+        usuario = DaoUserSQL.iniciarSesion(email,clave,dao);
         if (usuario != null) {
             cargaChats();
-            Persistence.guardaUser(this);
+            guardaUser();
         }
         return usuario;
         }
@@ -131,7 +146,7 @@ public class GestionaApp implements Serializable {
         }
     }*/
     public void cargaChats(){
-         chats = DAO.cargaChats(usuario);
+        chats = DaoChatSQL.cargaChats(usuario,dao);
     }
     public ArrayList<Chat> buscaChats(User user){
         ArrayList<Chat> chatUser = new ArrayList<>();
@@ -142,12 +157,12 @@ public class GestionaApp implements Serializable {
     }
     public void addMensaje(Chat chat, Mensaje mensaje){
         chat.addMensaje(mensaje.getTexto(),mensaje.getUsuario(),chat.getId());
-        DAO.addMensaje(mensaje,chat);
+        DaoMensajeSQL.addMensaje(mensaje,chat,dao);
         chats.removeIf(c -> c.getId() == chat.getId());
         chats.addFirst(chat);
     }
     public void addMensajeBienvenidaGrupo(String emailCreador,int idChat){
-        DAO.addMensaje(new Mensaje(new User(1,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat,LocalDateTime.now()),buscaChat(idChat));
+        DaoMensajeSQL.addMensaje(new Mensaje(new User(0,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat,LocalDateTime.now()),buscaChat(idChat),dao);
         chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(0,"Bienvenido"),idChat);
     }
 
@@ -159,7 +174,7 @@ public class GestionaApp implements Serializable {
         return null;
     }
     public boolean addChat(ArrayList<User> users,User uTemp,String nombre,User user){
-        Chat chat = DAO.crearChat(users,uTemp,nombre,user);
+        Chat chat = DaoChatSQL.crearChat(users,uTemp,nombre,user,dao);
         if (chat != null){
             chats.addFirst(chat);
             return true;
@@ -192,15 +207,16 @@ public class GestionaApp implements Serializable {
         }
         return true;
     }
+    //todo add atributo boolean chat para distingir chat de grupo para expulsar usuario
     public boolean borrarChat(Chat chat,User uTemp){
-        if (DAO.eliminaUserChat(uTemp,chat)) {
+        if (DaoChatSQL.eliminaUserChat(uTemp,chat,dao)) {
             chats.remove(getChat(chat.getId()));
             return true;
         }
         return false;
     }
     public boolean eliminaUserChat(Chat chat,User user){
-        if (DAO.eliminaUserChat(user, chat)){
+        if (DaoChatSQL.eliminaUserChat(user, chat,dao)){
             chat.borraUser(user.getEmail());
             return true;
         }
@@ -210,33 +226,33 @@ public class GestionaApp implements Serializable {
         for (Chat c: buscaChats(user)){
             borrarChat(c,user);
         }
-        DAO.actualizaFecha(user);
-        DAO.borraUsuario(user);
+        DaoUserSQL.actualizaFecha(user,dao);
+        DaoUserSQL.borraUsuario(user,dao);
         Persistence.eliminaUsuario(user);
     }
     public boolean addAdmin(Chat chat,User user){
-        if (DAO.addUserAdminChat(user,chat)) {
+        if (DaoChatSQL.addUserAdminChat(user,chat,dao)) {
             chat.addUserAdmin(user);
             return true;
         }
         return false;
     }
     public boolean quitaAdmin(Chat chat, User user){
-        if (DAO.quitarUserAdminChat(user, chat)) {
+        if (DaoChatSQL.quitarUserAdminChat(user, chat,dao)) {
             chat.quitarUserAdmin(user);
             return true;
         }
         return false;
     }
     public boolean addUserChat(Chat chat, User user){
-        if (DAO.addUserChat(user, chat)){
+        if (DaoChatSQL.addUserChat(user, chat,dao)){
             chat.addUser(user);
             return true;
         }
         return false;
     }
     public boolean cambiaNombreChat(Chat chat, String nombre){
-        if (DAO.cambiarNombreChat(chat, nombre)){
+        if (DaoChatSQL.cambiarNombreChat(chat, nombre,dao)){
             chat.setNombre(nombre);
             return true;
         }
@@ -260,14 +276,14 @@ public class GestionaApp implements Serializable {
         chats = chatsOrdenados;
     }
     public boolean cambiaEmail(String email,User user){
-        if (DAO.cambiarEmailUsuario(user,email)){
+        if (DaoUserSQL.cambiarEmailUsuario(user,email,dao)){
             user.setEmail(email);
             return true;
         }
         return false;
     }
     public boolean cambiaClave(String clave,User user){
-        return DAO.cambiarClaveUsuario(user, clave);
+        return DaoUserSQL.cambiarClaveUsuario(user, clave,dao);
     }
     public void eliminaUsuarioEnUso(){
         Persistence.eliminaUsuariosEnUso();
@@ -277,7 +293,7 @@ public class GestionaApp implements Serializable {
     }
     public void cambiaChatUso(int chat){
         chatEnUso = chat;
-        Persistence.guardaUser(this);
+        guardaUser();
     }
     public boolean ultimoMensajeUser(){
         return buscaChat(chatEnUso).getMensajes().getLast().getUsuario().getId() == usuario.getId();
@@ -286,7 +302,7 @@ public class GestionaApp implements Serializable {
     public boolean buscaCambios(){
         Chat chat = null;
         if (chatEnUso != -1) {
-                chat = DAO.cargaChat(usuario,chatEnUso);
+                chat = DaoChatSQL.cargaChat(usuario,chatEnUso,dao);
                 if (chat != null) {
                             if(!chat.getUltimoMensaje().isEqual(buscaChat(chatEnUso).getUltimoMensaje())) return true;
                 } else return false;
