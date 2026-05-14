@@ -100,58 +100,23 @@ public class GestionaApp implements Serializable {
         }
         return usuario;
         }
-    //selection sort es mas rápido
-    /*public  void ordenaUsersActivos(){
-        int posMasGrande = 0;
-        LocalDateTime fechaMasGrande = null;
-        User uAux;
-        for (int i = 0; i <usuariosActivos.size() ; i++) {
-            for (int j = i; j < usuariosActivos.size(); j++) {
-                if (j == i){
-                    posMasGrande = i;
-                    fechaMasGrande = usuariosActivos.get(i).getUltimaConexion();
-                } else {
-                    if (usuariosActivos.get(j).getUltimaConexion().isAfter(fechaMasGrande)){
-                        fechaMasGrande = usuariosActivos.get(j).getUltimaConexion();
-                        posMasGrande = j;
-                    }
-                }
-            }
-            uAux = usuariosActivos.get(i);
-            usuariosActivos.set(i,usuariosActivos.get(posMasGrande));
-            usuariosActivos.set(posMasGrande,uAux);
-        }
-    }*/
-    /*public void ordenaUsersBorrados(){
-        int posMasGrande = 0;
-        LocalDateTime fechaMasGrande = null;
-        User uAux;
-        for (int i = 0; i <usuariosBorrados.size() ; i++) {
-            for (int j = i; j < usuariosBorrados.size(); j++) {
-                if (j == i){
-                    posMasGrande = i;
-                    fechaMasGrande = usuariosBorrados.get(i).getUltimaConexion();
-                } else {
-                    if (usuariosBorrados.get(j).getUltimaConexion().isAfter(fechaMasGrande)){
-                        fechaMasGrande = usuariosBorrados.get(j).getUltimaConexion();
-                        posMasGrande = j;
-                    }
-                }
-            }
-            uAux = usuariosBorrados.get(i);
-            usuariosBorrados.set(i,usuariosBorrados.get(posMasGrande));
-            usuariosBorrados.set(posMasGrande,uAux);
-        }
-    }*/
     public void cargaChats(){
         chats = DaoChatSQL.cargaChats(usuario,dao);
     }
-    public ArrayList<Chat> buscaChats(User user){
-        ArrayList<Chat> chatUser = new ArrayList<>();
-        for (Chat c : chats){
-            if (c.buscaUser(user.getEmail()) != null) chatUser.add(c);
+    public void cargaChat(int id){
+        Chat chat = DaoChatSQL.cargaChat(usuario,id,dao);
+        //buscaChat(id).setMensajes(chat.getMensajes());
+        actualizaChat(chat);
+    }
+    public void descargaChat(int id){
+        buscaChat(id).setMensajes(null);
+    }
+    public void actualizaChat(Chat chat){
+        if (chats != null) {
+            int longitud = chats.size();
+            chats.remove(buscaChat(chat.getId()));
+            if (chats.size() == longitud - 1) chats.addFirst(chat);
         }
-        return chatUser;
     }
     public void addMensaje(Chat chat, Mensaje mensaje){
         chat.addMensaje(mensaje.getTexto(),mensaje.getUsuario(),chat.getId());
@@ -221,9 +186,6 @@ public class GestionaApp implements Serializable {
         return false;
     }
     public void borrarCuenta(User user){
-        for (Chat c: buscaChats(user)){
-            borrarChat(c,user);
-        }
         DaoUserSQL.actualizaFecha(user,dao);
         DaoUserSQL.borraUsuario(user,dao);
         Persistence.eliminaUsuario(user);

@@ -245,7 +245,9 @@ public class App {
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
         gestionaApp.cambiaChatUso(chat.getId());
-        gestionaApp.cargaChats();
+        //gestionaApp.cargaChats();
+        gestionaApp.cargaChat(chat.getId());
+        chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
         pintaChat(chat);
         String mensaje;
         do {
@@ -260,14 +262,16 @@ public class App {
                 System.out.println("Volviendo al menú");
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
-                gestionaApp.cargaChats();
+                //gestionaApp.cargaChats();
+                gestionaApp.cargaChat(chat.getId());
                 chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 Utils.limpiaPantalla();
                 pintaChat(chat);
             } else {
                 gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId(), LocalDateTime.now()));
                 Utils.limpiaPantalla();
-                gestionaApp.cargaChats();
+                //gestionaApp.cargaChats();
+                gestionaApp.cargaChat(chat.getId());
                 chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 pintaChat(chat);
             }
@@ -352,7 +356,7 @@ public class App {
                 if (gestionaApp.buscaChat(users) == null) {
                     if (gestionaApp.addChat(users, null, null, uTemp)) {
                         Utils.limpiaPantalla();
-                        usaChat(gestionaApp.buscaChats(uTemp).getFirst(), gestionaApp, uTemp);
+                        usaChat(gestionaApp.getChats().getFirst(), gestionaApp, uTemp);
                     } else {
                         System.out.println("Error al crear el chat comprueba la conexión");
                     }

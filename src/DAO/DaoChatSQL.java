@@ -40,12 +40,14 @@ public class DaoChatSQL {
                 while(resultados.next()) {
                     admins.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
                 }
-                statement = dao.getConexion().createStatement();
+                //eliminar de aqui
+                /*statement = dao.getConexion().createStatement();
                 resultados = statement.executeQuery("select * from mensajeUsuario where idChat = " + id + " and idUserReceptor = " + user.getId() + " order by fechaEnviado asc");
                 //Cogemos los usuarios de los chats en los que esta
                 while(resultados.next()) {
                     mensajes.add(new Mensaje(new User(resultados.getInt("idUserEnvia")),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
-                }
+                }*/
+                //a aqui
                 statement = dao.getConexion().createStatement();
                 resultados = statement.executeQuery("select * from chats where id = " + id + " order by ultimoMensaje desc limit 1");
                 //Cogemos los usuarios de los chats en los que esta
@@ -53,8 +55,9 @@ public class DaoChatSQL {
                 nombre = resultados.getString("nombre");
                 fechaUltimoMensaje = Utils.pasarStringFecha(resultados.getString("ultimoMensaje"));
                 dao.close();
-                mensajes = DaoMensajeSQL.determinaUsuarioEnvia(mensajes,dao);
-                chats.add(new Chat(id,mensajes,usuarios,admins,nombre,user,fechaUltimoMensaje));
+                //Y esta linea
+                //mensajes = DaoMensajeSQL.determinaUsuarioEnvia(mensajes,dao);
+                chats.add(new Chat(id,null,usuarios,admins,nombre,user,fechaUltimoMensaje));
 
             }
 
