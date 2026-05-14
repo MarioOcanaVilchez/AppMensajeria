@@ -55,7 +55,7 @@ public class DaoUserSQL {
 
      public static boolean crearUsuario(String email,String clave,DaoManager dao){
         String insert = "Insert into usuariosActivos (id,email,clave,ultimaConexion) values (?, ?, ?, ?)";
-        int id = generaIdActivos(dao);
+        int id = generaId(dao);
         try {
             dao.open();
             PreparedStatement ps = dao.getConexion().prepareStatement(insert);
@@ -71,21 +71,20 @@ public class DaoUserSQL {
         }
     }
 
-    public static int generaIdActivos(DaoManager dao){
+    public static int generaId(DaoManager dao){
         int id;
         do{
             id = (int) (Math.random() * 9999998 + 1);
-        }while(buscaUsuarioId(id,dao) != null);
+        }while(buscaUsuarioId(id,dao) != null && buscaUsuarioBorradoId(id,dao) != null);
         return id;
     }
-
     public static User recuperaUser(User user,String clave,DaoManager dao) {
         try {
             dao.open();
             PreparedStatement ps = dao.getConexion().prepareStatement("delete from usuariosBorrados where id = " + user.getId());
             ps.executeUpdate();
             ps = dao.getConexion().prepareStatement("Insert into usuariosActivos (id,email,clave,ultimaConexion) values (?, ?, ?, ?)");
-            ps.setInt(1,generaIdActivos(dao));
+            ps.setInt(1,user.getId());
             ps.setString(2, user.getEmail());
             ps.setString(3, clave);
             ps.setString(4, Utils.pasaFechaString(LocalDateTime.now()));
@@ -128,7 +127,7 @@ public class DaoUserSQL {
 
     public static boolean borraUsuario(User user,DaoManager dao){
         try {
-            int id = generaIdBorrados(dao);
+            int id = user.getId();
             dao.open();
             Statement statement = dao.getConexion().createStatement();
             ResultSet resultados = statement.executeQuery("select * from usuariosActivos where id = " + user.getId() + " order by ultimaConexion desc limit 1");
@@ -147,13 +146,6 @@ public class DaoUserSQL {
         } catch (SQLException e) {
             return false;
         }
-    }
-    public static int generaIdBorrados(DaoManager dao){
-        int id;
-        do{
-            id = (int) (Math.random() * 999999);
-        }while(buscaUsuarioBorradoId(id,dao) != null);
-        return id;
     }
     public static User buscaUsuarioBorradoId(int id,DaoManager dao){
         try {

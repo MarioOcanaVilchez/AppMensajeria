@@ -63,59 +63,6 @@ public class DaoChatSQL {
         }
         return chats;
     }
-    /*
-    public static ArrayList<Chat> cargaChats(User user,DaoManager dao){
-        ArrayList<Chat> chats = new ArrayList<>();
-        ArrayList<Integer> idChats = new ArrayList<>();
-        try {
-            dao.open();
-            Statement statement = dao.getConexion().createStatement();
-            ResultSet resultados = statement.executeQuery("select * from chatUsuario CU inner join chats C on CU.id = C.id where CU.idUser = " + user.getId() + " order by C.ultimoMensaje desc");
-            //Cogemos los ids de los chats en los que esta
-            while(resultados.next()) {
-                idChats.add(resultados.getInt("id"));
-            }
-            for (int id: idChats){
-                ArrayList<User> usuarios = new ArrayList<>();
-                ArrayList<User> admins = new ArrayList<>();
-                ArrayList<Mensaje> mensajes = new ArrayList<>();
-                String nombre;
-                statement = dao.getConexion().createStatement();
-                resultados = statement.executeQuery("select * from chatUsuario CU inner join usuariosActivos UA on CU.idUser = UA.id where CU.id = " + id);
-                //Cogemos los usuarios de los chats en los que esta
-                while(resultados.next()) {
-                    usuarios.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
-                }
-                statement = dao.getConexion().createStatement();
-                resultados = statement.executeQuery("select * from userAdmin UAD inner join usuariosActivos UA on UA.id = UAD.idUser where UAD.id = " + id);//Cogemos los usuarios de los chats en los que esta
-                while(resultados.next()) {
-                    admins.add(new User(resultados.getInt("idUser"),resultados.getString("email")));
-                }
-                statement = dao.getConexion().createStatement();
-                resultados = statement.executeQuery("select * from mensajeUsuario where idChat = " + id + " and idUserReceptor = " + user.getId() + " order by fechaEnviado asc");
-                //Cogemos los usuarios de los chats en los que esta
-                //todo problemas
-                dao.close();
-                while(resultados.next()) {
-                    if (DaoUserSQL.buscaUsuarioId(resultados.getInt("idUserEnvia"),dao) != null) mensajes.add(new Mensaje(DaoUserSQL.buscaUsuarioId(resultados.getInt("idUserEnvia"),dao),resultados.getString("texto"),id, Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
-                    else if (DaoUserSQL.buscaUsuarioBorradoId(resultados.getInt("idUserEnvia"),dao) != null) mensajes.add(new Mensaje(DaoUserSQL.buscaUsuarioBorradoId(resultados.getInt("idUserEnvia"),dao),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
-                    else mensajes.add(new Mensaje(new User(0,"Administración"),resultados.getString("texto"),id,Utils.pasarStringFecha(resultados.getString("fechaEnviado"))));
-                }
-                dao.open();
-                statement = dao.getConexion().createStatement();
-                resultados = statement.executeQuery("select * from chats where id = " + id + " order by ultimoMensaje desc limit 1");
-                //Cogemos los usuarios de los chats en los que esta
-                resultados.next();
-                nombre = resultados.getString("nombre");
-                chats.add(new Chat(id,mensajes,usuarios,admins,nombre,user,Utils.pasarStringFecha(resultados.getString("ultimoMensaje"))));
-            }
-            dao.close();
-        } catch (SQLException e) {
-            return null;
-        }
-        return chats;
-    }
-     */
 
     public static Chat cargaChat(User user,int idChat,DaoManager dao){
         Chat chat;

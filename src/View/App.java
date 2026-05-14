@@ -244,8 +244,8 @@ public class App {
     }
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
-        gestionaApp.cargaChats();
         gestionaApp.cambiaChatUso(chat.getId());
+        gestionaApp.cargaChats();
         pintaChat(chat);
         String mensaje;
         do {

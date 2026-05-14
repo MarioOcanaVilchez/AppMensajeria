@@ -30,8 +30,6 @@ public class GestionaApp implements Serializable {
             chatEnUso = gestionaApp.chatEnUso;
         } else chats = new ArrayList<>();
     }
-
-
     public ArrayList<Chat> getChats() {
         return chats;
     }
