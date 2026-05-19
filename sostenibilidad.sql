@@ -10,6 +10,14 @@ constraint PK_usuariosActivos primary key (id),
 constraint UK_usuariosActivos_email unique (email),
 constraint CK_usuariosActivos_email check (email like '%@gmail.com' or email like '%@yahoo.com')
 );
+
+create table usuarioBloqueado(
+idUserBloquea integer unsigned,
+idUserBloqueado integer unsigned,
+constraint PK_usuarioBloqueado primary key (idUserBloquea,idUserBloqueado),
+constraint FK_usuarioBloqueado_ids foreign key (idUserBloquea) references usuariosActivos(id) on delete cascade on update cascade,
+constraint FK_usuarioBloqueado_ids2 foreign key (idUserBloqueado) references usuariosActivos(id) on delete cascade on update cascade
+);
 create table usuariosBorrados(
 id integer unsigned,
 email varchar(40),
@@ -23,23 +31,27 @@ create table chats(
 id integer unsigned,
 nombre varchar(100) null,
 ultimoMensaje datetime,
+chat boolean,
 constraint PK_chats primary key (id)
 );
 create table mensajeChat(
+id bigint,
 idChat integer unsigned,
 idUserEnvia integer unsigned,
 texto text,
 fechaEnviado datetime,
-constraint PK_mensaje primary key (fechaEnviado,idChat,idUserEnvia),
+constraint PK_mensaje primary key (id),
 constraint FK_mensaje_idChat foreign key (idChat) references chats(id) on delete cascade on update cascade
 );
 create table mensajeUsuario(
+idMensaje bigint,
 idChat integer unsigned,
 idUserEnvia integer unsigned,
 idUserReceptor integer unsigned,
 texto text,
 fechaEnviado datetime,
-constraint PK_mensajeUsuario primary key (fechaEnviado,idChat,idUserReceptor,idUserEnvia),
+leido boolean default false,
+constraint PK_mensajeUsuario primary key (idMensaje,idUserReceptor),
 constraint FK_mensajeUsuario_idChat foreign key (idChat) references chats(id) on delete cascade on update cascade,
 constraint FK_mensajeUsuario_idUserReceptor foreign key (idUserReceptor) references usuariosActivos(id) on delete cascade on update cascade
 );
