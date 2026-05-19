@@ -5,13 +5,15 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class Mensaje implements Serializable {
+    private long id;
     private User usuario;
     private String texto;
     private int idChat;
     private LocalDateTime fecha;
 
-    public Mensaje(User usuario, String texto, int idChat,LocalDateTime fecha) {
+    public Mensaje(long id,User usuario, String texto, int idChat,LocalDateTime fecha) {
         this.usuario = usuario;
+        this.id = id;
         this.texto = texto;
         this.idChat = idChat;
         this.fecha = fecha;

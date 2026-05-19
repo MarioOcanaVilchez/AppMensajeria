@@ -1,7 +1,6 @@
 package View;
 
 import Controller.GestionaApp;
-import Models.Chat;
 import Utils.Utils;
 
 
@@ -13,6 +12,7 @@ public class RecargaChat implements Runnable{
         do {
             if (gestionaApp.buscaCambios()) {
                     gestionaApp.cargaChat(gestionaApp.getChatEnUso());
+                    gestionaApp.ponerMensajesLeidos(gestionaApp.buscaChat(gestionaApp.getChatEnUso()));
                     if (!gestionaApp.ultimoMensajeUser()) {
                         for (int i = 0; i < gestionaApp.getChats().size(); i++) {
                             if (gestionaApp.getChats().get(i).getId() == gestionaApp.getChatEnUso()) {

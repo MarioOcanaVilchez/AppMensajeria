@@ -56,7 +56,7 @@ public class GestionaApp implements Serializable {
 
     //Otros metodos
     public void mock(){
-        for (int i = 0; i < 50000; i++) {
+        for (int i = 0; i < 1200; i++) {
             DaoUserSQL.crearUsuario("email" + (i + 1) + "@gmail.com","1234",dao);
         }
         User user = DaoUserSQL.buscaUsuarioEmail("email1000@gmail.com",dao);
@@ -64,7 +64,7 @@ public class GestionaApp implements Serializable {
             ArrayList<User> users = new ArrayList<>();
             users.add(user);
             users.add(DaoUserSQL.buscaUsuarioEmail("email" + (i + 1) + "@gmail.com",dao));
-            addChat(users,null,null,user);
+            addChat(users,null,user);
         }
     }
     public boolean addUser(String email, String clave){
@@ -105,11 +105,7 @@ public class GestionaApp implements Serializable {
     }
     public void cargaChat(int id){
         Chat chat = DaoChatSQL.cargaChat(usuario,id,dao);
-        //buscaChat(id).setMensajes(chat.getMensajes());
         actualizaChat(chat);
-    }
-    public void descargaChat(int id){
-        buscaChat(id).setMensajes(null);
     }
     public void actualizaChat(Chat chat){
         if (chats != null) {
@@ -119,14 +115,16 @@ public class GestionaApp implements Serializable {
         }
     }
     public void addMensaje(Chat chat, Mensaje mensaje){
-        chat.addMensaje(mensaje.getTexto(),mensaje.getUsuario(),chat.getId());
+        //chat.addMensaje(mensaje.getTexto(),mensaje.getUsuario(),chat.getId());
         DaoMensajeSQL.addMensaje(mensaje,chat,dao);
         chats.removeIf(c -> c.getId() == chat.getId());
         chats.addFirst(chat);
     }
+    public void ponerMensajesLeidos(Chat chat){
+        DaoMensajeSQL.ponerMensajesLeidos(usuario.getId(),chat.getId(),dao);
+    }
     public void addMensajeBienvenidaGrupo(String emailCreador,int idChat){
-        DaoMensajeSQL.addMensaje(new Mensaje(new User(0,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat,LocalDateTime.now()),buscaChat(idChat),dao);
-        chats.getFirst().addMensaje(Data.mensajeCreacion(emailCreador),new User(0,"Bienvenido"),idChat);
+        DaoMensajeSQL.addMensaje(new Mensaje(-1,new User(0,"Bievenido"),Data.mensajeCreacion(emailCreador),idChat,LocalDateTime.now()),buscaChat(idChat),dao);
     }
 
 
@@ -136,8 +134,17 @@ public class GestionaApp implements Serializable {
         }
         return null;
     }
-    public boolean addChat(ArrayList<User> users,User uTemp,String nombre,User user){
-        Chat chat = DaoChatSQL.crearChat(users,uTemp,nombre,user,dao);
+    public boolean addGrupo(ArrayList<User> users,User uTemp,String nombre,User user){
+        Chat chat = DaoChatSQL.crearGrupo(users,uTemp,nombre,user,dao);
+        if (chat != null){
+            if (!chats.isEmpty()) chats.addFirst(chat);
+            else chats.add(chat);
+            return true;
+        }
+        return false;
+    }
+    public boolean addChat(ArrayList<User> users,User uTemp,User user){
+        Chat chat = DaoChatSQL.crearChat(users,uTemp,user,dao);
         if (chat != null){
             chats.addFirst(chat);
             return true;
@@ -218,23 +225,6 @@ public class GestionaApp implements Serializable {
         }
         return false;
     }
-    public void ordenaChats(){
-        ArrayList<Chat> chatsOrdenados = new ArrayList<>();
-        Chat chatMasAntiguo = null;
-        int veces = chats.size();
-        for (int i = 0; i < veces; i++) {
-            for (int j = 0; j < chats.size(); j++) {
-                if (chatMasAntiguo == null) chatMasAntiguo = chats.get(j);
-                else if (chatMasAntiguo.getUltimoMensaje().isAfter(chats.get(j).getUltimoMensaje())) chatMasAntiguo = chats.get(j);
-            }
-            chatsOrdenados.addFirst(chatMasAntiguo);
-            for (Chat c : chats){
-                if (c.getId() == chatMasAntiguo.getId()) chatsOrdenados.remove(c);
-            }
-            chatMasAntiguo = null;
-        }
-        chats = chatsOrdenados;
-    }
     public boolean cambiaEmail(String email,User user){
         if (DaoUserSQL.cambiarEmailUsuario(user,email,dao)){
             user.setEmail(email);
@@ -260,7 +250,7 @@ public class GestionaApp implements Serializable {
     }
 
     public boolean buscaCambios(){
-        Chat chat = null;
+        Chat chat;
         if (chatEnUso != -1) {
                 chat = DaoChatSQL.cargaChat(usuario,chatEnUso,dao);
                 if (chat != null) {

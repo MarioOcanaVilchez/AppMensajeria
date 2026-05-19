@@ -27,9 +27,7 @@ public class Persistence {
                 ois.close();
                 return gestionaApp;
             }
-        } catch (IOException e) {
-            return null;
-        } catch (ClassNotFoundException e){
+        } catch (IOException | ClassNotFoundException e) {
             return null;
         }
         return null;
@@ -45,15 +43,17 @@ public class Persistence {
         }
     }
     public static void eliminaUsuario(User user){
-        File file = new File("Data/UsuarioEnUso/" + user.getId());
-        file.delete();
-        file = new File("Data/Usuarios/" + user.getId());
+        eliminaUsuariosEnUso();
+        File file = new File("Data/Usuarios/" + user.getId());
         file.delete();
     }
     public static String obtenId(){
         File directorio = new File("Data/UsuarioEnUso");
         String [] ficheros = directorio.list();
-        if (ficheros != null && ficheros.length == 1) return ficheros[0];
+        if (ficheros != null){
+            if (ficheros.length == 1) return ficheros[0];
+            else eliminaUsuariosEnUso();
+        }
         return null;
     }
     public static void existenCarpetas(){

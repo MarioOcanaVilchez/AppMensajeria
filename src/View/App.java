@@ -48,20 +48,27 @@ public class App {
                             borrarChat(gestionaApp, uTemp);
                             break;
                         case "6":
-                            borrarCuenta(gestionaApp, uTemp);
+
                             break;
                         case "7":
+
+                            break;
+                        case "8":
+                            borrarCuenta(gestionaApp, uTemp);
+                            break;
+                        case "9":
                             gestionaApp.eliminaUsuarioEnUso();
                             break;
                         default:
                             System.out.println("Opción no existente");
+                            break;
                     }
-                    if (!op.equals("7")){
+                    if (!op.equals("9")){
                         gestionaApp.guardaUser();
                         Utils.pulsaParaContinuar();
                         Utils.limpiaPantalla();
                     }
-                } while (!op.equals("7") && uTemp.getId() != 0);
+                } while (!op.equals("9") && uTemp.getId() != 0);
             }
         } while (uTemp != null);
     }
@@ -144,8 +151,10 @@ public class App {
                 3. Buscar usuario
                 4. Cambiar datos
                 5. Borrar chat
-                6. Borrar cuenta
-                7. Salir""");
+                6. Salir de un chat
+                7. Gestionar bloqueo de usuarios
+                8. Borrar cuenta
+                9. Salir""");
         return preguntaPers("Introduce una opción");
     }
 
@@ -162,7 +171,8 @@ public class App {
     public static void pintaChats(ArrayList<Chat> chats) {
         if (chats.isEmpty()) System.out.println("No hay chats");
         for (int i = 0; i < chats.size(); i++) {
-            System.out.println((i + 1) + ". " + chats.get(i).getNombre());
+            int numNotificaciones = chats.get(i).getMensajesNoLeidos();
+            System.out.println(String.format("%-70s %s",(i + 1) + ". " + chats.get(i).getNombre(), (numNotificaciones != 0 ? (numNotificaciones == 1 ? "  1 mensaje nuevo" :"  " + numNotificaciones + " mensajes nuevos") : "")));
         }
         System.out.println((chats.size() + 1) + ". Salir");
     }
@@ -245,12 +255,12 @@ public class App {
     //Usar un chat o grupo
     public static void usaChat(Chat chat, GestionaApp gestionaApp, User uTemp) {
         gestionaApp.cambiaChatUso(chat.getId());
-        //gestionaApp.cargaChats();
         gestionaApp.cargaChat(chat.getId());
         chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
         pintaChat(chat);
         String mensaje;
         do {
+            gestionaApp.ponerMensajesLeidos(chat);
             RecargaChat recargaChat = new RecargaChat();
             ExecutorService hilo = Executors.newSingleThreadExecutor();
             hilo.submit(recargaChat);
@@ -262,15 +272,13 @@ public class App {
                 System.out.println("Volviendo al menú");
             } else if (mensaje.equalsIgnoreCase("admin")){
                 menuAdmin(chat,uTemp,gestionaApp);
-                //gestionaApp.cargaChats();
                 gestionaApp.cargaChat(chat.getId());
                 chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 Utils.limpiaPantalla();
                 pintaChat(chat);
             } else {
-                gestionaApp.addMensaje(chat, new Mensaje(uTemp, mensaje, chat.getId(), LocalDateTime.now()));
+                gestionaApp.addMensaje(chat, new Mensaje(-1,uTemp, mensaje, chat.getId(), LocalDateTime.now()));
                 Utils.limpiaPantalla();
-                //gestionaApp.cargaChats();
                 gestionaApp.cargaChat(chat.getId());
                 chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
                 pintaChat(chat);
@@ -328,7 +336,7 @@ public class App {
             else {
                 users.add(uTemp);
                 nombre = pideNombre();
-                gestionaApp.addChat(users, uTemp, nombre, uTemp);
+                gestionaApp.addGrupo(users, uTemp, nombre, uTemp);
                 System.out.println("Chat creado");
                 Utils.pulsaParaContinuar();
                 Utils.limpiaPantalla();
@@ -354,7 +362,7 @@ public class App {
                 users.add(uTemp);
                 users.add(gestionaApp.buscaUserActivos(email));
                 if (gestionaApp.buscaChat(users) == null) {
-                    if (gestionaApp.addChat(users, null, null, uTemp)) {
+                    if (gestionaApp.addChat(users, null, uTemp)) {
                         Utils.limpiaPantalla();
                         usaChat(gestionaApp.getChats().getFirst(), gestionaApp, uTemp);
                     } else {

@@ -11,8 +11,10 @@ public class Chat implements Serializable {
     private LocalDateTime ultimoMensaje;
     private ArrayList<User> usersAdmins;
     private String nombre;
+    private int mensajesNoLeidos;
+    private boolean chat;
 
-    public Chat(int id, ArrayList<User> usuarios, User user,String nombre,User uTemp) {
+    public Chat(int id, ArrayList<User> usuarios, User user,String nombre,User uTemp,int mensajesNoLeidos,boolean chat) {
         this.id = id;
         this.usuarios = usuarios;
         ultimoMensaje = LocalDateTime.now();
@@ -20,16 +22,20 @@ public class Chat implements Serializable {
         usersAdmins.add(user);
         mensajes = new ArrayList<>();
         this.nombre = nombre;
+        this.mensajesNoLeidos = mensajesNoLeidos;
+        this.chat = chat;
         ajustaNombre(uTemp);
     }
 
-    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins,String nombre,User uTemp,LocalDateTime ultimoMensaje) {
+    public Chat(int id, ArrayList<Mensaje> mensajes, ArrayList<User> usuarios, ArrayList<User> usersAdmins,String nombre,User uTemp,LocalDateTime ultimoMensaje,int mensajesNoLeidos,boolean chat) {
         this.id = id;
         this.usuarios = usuarios;
         this.usersAdmins = usersAdmins;
         this.mensajes = mensajes;
         this.ultimoMensaje = ultimoMensaje;
         this.nombre = nombre;
+        this.mensajesNoLeidos = mensajesNoLeidos;
+        this.chat = chat;
         ajustaNombre(uTemp);
     }
 
@@ -95,24 +101,30 @@ public class Chat implements Serializable {
         this.nombre = nombre;
     }
 
+    public int getMensajesNoLeidos() {
+        return mensajesNoLeidos;
+    }
+
+    public void setMensajesNoLeidos(int mensajesNoLeidos) {
+        this.mensajesNoLeidos = mensajesNoLeidos;
+    }
+
+    public boolean isChat() {
+        return chat;
+    }
+
     public User buscaUser(String email){
         for (User user : usuarios){
             if (user.getEmail().equals(email)) return user;
         }
         return null;
     }
-    public void addMensaje(String mensaje,User usuario,int idChat){
+    /*public void addMensaje(String mensaje,User usuario,int idChat){
         if (usuario.getEmail().equals("Bienvenido") || buscaUser(usuario.getEmail()) != null){
             ultimoMensaje = LocalDateTime.now();
-            mensajes.add(new Mensaje(usuario,mensaje,idChat,LocalDateTime.now()));
+            mensajes.add(new Mensaje(-1,usuario,mensaje,idChat,LocalDateTime.now()));
         }
-    }
-
-
-    public void addMensaje(Mensaje mensaje) {
-        mensajes.add(mensaje);
-    }
-
+    }*/
 
 
     public void borraUser(String email){
