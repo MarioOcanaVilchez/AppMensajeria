@@ -14,9 +14,7 @@ constraint CK_usuariosActivos_email check (email like '%@gmail.com' or email lik
 create table usuarioBloqueado(
 idUserBloquea integer unsigned,
 idUserBloqueado integer unsigned,
-constraint PK_usuarioBloqueado primary key (idUserBloquea,idUserBloqueado),
-constraint FK_usuarioBloqueado_ids foreign key (idUserBloquea) references usuariosActivos(id) on delete cascade on update cascade,
-constraint FK_usuarioBloqueado_ids2 foreign key (idUserBloqueado) references usuariosActivos(id) on delete cascade on update cascade
+constraint PK_usuarioBloqueado primary key (idUserBloquea,idUserBloqueado)
 );
 create table usuariosBorrados(
 id integer unsigned,
@@ -61,6 +59,14 @@ idUser integer unsigned,
 constraint PK_chatUsuario primary key (id,idUser),
 constraint FK_chatUsuario_id foreign key (id) references chats(id) on delete cascade on update cascade,
 constraint FK_chatUsuario_idUser foreign key (idUser) references usuariosActivos(id) on delete cascade on update cascade
+);
+/*Al borrar una cuenta todos sus chats van a esta tabla
+comprobar cada vez que un usuario sale de un chat si hay gente en el chat y si no eliminarlo*/
+create table chatUsuarioAnteriores(
+id integer unsigned,
+idUser integer unsigned,
+constraint PK_chatUsuarioAnteriores primary key (id,idUser),
+constraint FK_chatUsuarioAnteriores_id foreign key (id) references chats(id) on delete cascade on update cascade
 );
 
 create table userAdmin(

@@ -2,11 +2,9 @@ package View;
 
 import Controller.GestionaApp;
 import Models.Chat;
-import Models.Mensaje;
 import Models.User;
 import Utils.Utils;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +46,7 @@ public class App {
                             borrarChat(gestionaApp, uTemp);
                             break;
                         case "6":
-
+                            salirDeChat(gestionaApp);
                             break;
                         case "7":
 
@@ -244,6 +242,28 @@ public class App {
         return null;
     }
 
+    //Menu para seleccionar un chat o grupo
+    public static Chat seleccionaChatConMensajes(GestionaApp gestionaApp) {
+        int op;
+        ArrayList<Chat> chats = gestionaApp.getChatsConMensajes();
+        do {
+            pintaChats(chats);
+            try {
+                op = Integer.parseInt(preguntaPers("Introduce una opción"));
+            } catch (NumberFormatException e) {
+                System.out.println("Opción no existente");
+                op = Integer.MIN_VALUE;
+            }
+            if (op <= chats.size()) {
+                if (op <= 0) System.out.println("Opción no existente");
+                else {
+                    Utils.limpiaPantalla();
+                    return chats.get(op - 1);
+                }
+            }
+        } while (op != chats.size() + 1);
+        return null;
+    }
     //ver los chats y usarlos
     public static void verChats(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
@@ -277,7 +297,7 @@ public class App {
                 Utils.limpiaPantalla();
                 pintaChat(chat);
             } else {
-                gestionaApp.addMensaje(chat, new Mensaje(-1,uTemp, mensaje, chat.getId(), LocalDateTime.now()));
+                gestionaApp.addMensaje(chat, uTemp.getId(), mensaje);
                 Utils.limpiaPantalla();
                 gestionaApp.cargaChat(chat.getId());
                 chat = gestionaApp.buscaChat(gestionaApp.getChatEnUso());
@@ -336,7 +356,7 @@ public class App {
             else {
                 users.add(uTemp);
                 nombre = pideNombre();
-                gestionaApp.addGrupo(users, uTemp, nombre, uTemp);
+                gestionaApp.addGrupo(users, nombre, uTemp);
                 System.out.println("Chat creado");
                 Utils.pulsaParaContinuar();
                 Utils.limpiaPantalla();
@@ -362,7 +382,7 @@ public class App {
                 users.add(uTemp);
                 users.add(gestionaApp.buscaUserActivos(email));
                 if (gestionaApp.buscaChat(users) == null) {
-                    if (gestionaApp.addChat(users, null, uTemp)) {
+                    if (gestionaApp.addChat(users)) {
                         Utils.limpiaPantalla();
                         usaChat(gestionaApp.getChats().getFirst(), gestionaApp, uTemp);
                     } else {
@@ -380,14 +400,16 @@ public class App {
         } else System.out.println("Operación cancelada");
     }
 
-    //Borra una combersación
+    //Borra una conversación
     public static void borrarChat(GestionaApp gestionaApp, User uTemp) {
         Chat chat;
         do {
-            chat = seleccionaChat(gestionaApp);
+            chat = seleccionaChatConMensajes(gestionaApp);
             if (chat != null) {
-                if (gestionaApp.borrarChat(chat,uTemp)) System.out.println("Chat eliminado");
+                if (gestionaApp.borrarChat(chat)) System.out.println("Mensajes borrados");
                 else System.out.println("Error de conexión intentalo de nuevo");
+                Utils.pulsaParaContinuar();
+                Utils.limpiaPantalla();
             }
         } while (chat != null);
     }
@@ -528,5 +550,24 @@ public class App {
         else if (nombre.equals(chat.getNombre())) System.out.println("El nombre no puede ser igual al anterior");
         else if (gestionaApp.cambiaNombreChat(chat,nombre)) System.out.println("Nombre cambiado");
         else System.out.println("Error de conexión intentalo de nuevo");
+    }
+    public static void salirDeChat(GestionaApp gestionaApp){
+        Chat chat;
+        do {
+            chat = seleccionaChat(gestionaApp);
+            if (chat != null) {
+                if (!gestionaApp.esChat(chat)){
+                    if (gestionaApp.eliminaGrupo(chat)){
+                        System.out.println("Saliste del chat " + chat.getNombre());
+                        gestionaApp.cargaChats();
+                    } else System.out.println("Error al salir del chat");
+                } else if (gestionaApp.eliminaChat(chat)) {
+                    System.out.println("Saliste del chat " + chat.getNombre());
+                    gestionaApp.cargaChats();
+                } else System.out.println("No puedes salir de un chat activo salvo bloqueando al usuario");
+                Utils.pulsaParaContinuar();
+            }
+        } while (chat != null);
+
     }
 }
